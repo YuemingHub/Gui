@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design-ultimate": {
+      "name": "Frontend Design Ultimate",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=frontend-design-ultimate",
+      "source": "community",
+      "version": "1.0.0",
+      "installedAt": "2026-05-22T04:19:15Z"
+    },
+    "frontend-design-pro": {
+      "name": "Frontend Design Pro — 专业前端设计规范",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=frontend-design-pro",
+      "source": "community",
+      "version": "1.0.0",
+      "installedAt": "2026-05-22T04:20:28Z"
+    },
+    "ui-ux-design": {
+      "name": "UI/UX Design Guide",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=ui-ux-design",
+      "source": "community",
+      "version": "1.0.0",
+      "installedAt": "2026-05-22T04:20:30Z"
+    }
+  }
+}
