@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 import type { AppState } from "@/app/lib/types";
-import { gentleFade, motionEase, slowFadeUp, staggerContainer } from "@/components/ui/motion";
+import { gentleFade, motionEase, staggerContainer } from "@/components/ui/motion";
 
 const textareaClassName =
   "w-full rounded-[1.75rem] border border-white/8 bg-white/[0.045] px-5 py-4 text-base leading-8 text-stone-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition placeholder:text-stone-600 focus:border-white/16 focus:bg-white/[0.07] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_0_0_4px_rgba(205,178,137,0.16)] sm:text-lg";
@@ -21,7 +21,7 @@ type HomeSectionProps = {
 export function HomeSection({ daily, onChange }: HomeSectionProps) {
   const [showBoundary, setShowBoundary] = useState(Boolean(daily.notReceiving.trim()));
   const [showReturn, setShowReturn] = useState(Boolean(daily.didReturn.trim()) || getReturnPromptVisible());
-  const [focused, setFocused] = useState(Boolean(daily.trueThing.trim()));
+  const [focused, setFocused] = useState(false);
 
   const update = (key: keyof AppState["daily"], value: string) => {
     onChange({ ...daily, [key]: value });
@@ -34,24 +34,17 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
     return "你也可以什么都不写，只先在这里停一下。";
   }, [daily.didReturn, daily.notReceiving, daily.trueThing]);
 
-  const entryOpen = focused || Boolean(daily.trueThing.trim());
+  // Card warms when focused OR has content — space responds to your presence
+  const isWarm = focused || Boolean(daily.trueThing.trim());
 
   return (
     <motion.section initial="hidden" animate="visible" variants={staggerContainer} className="space-y-7">
-      <motion.div variants={slowFadeUp} className="space-y-4">
-        <p className="max-w-2xl text-sm leading-7 text-stone-400">先别急着填写。先靠近，然后只留下一件今天真正要照看的事。</p>
-        <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-stone-600">
-          <span>落笔</span>
-          <span className="h-px flex-1 bg-white/8" />
-        </div>
-      </motion.div>
-
       <motion.div
         initial={{ opacity: 0, y: 32, boxShadow: "0 32px 92px -66px rgba(0,0,0,0.76)" }}
         animate={{
           opacity: 1,
           y: 0,
-          boxShadow: entryOpen
+          boxShadow: isWarm
             ? "0 46px 132px -72px rgba(194,170,132,0.28)"
             : "0 32px 92px -66px rgba(0,0,0,0.76)",
         }}
@@ -59,11 +52,7 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
         className="overflow-hidden rounded-[2.1rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.024))]"
       >
         <div className="p-4 pb-[calc(1.5rem+var(--sab))] sm:p-7 sm:pb-[calc(1.75rem+var(--sab))]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-xl">
-              <p className="text-sm leading-7 text-stone-300">今天，我只照看这一件事。</p>
-              <p className="mt-2 text-sm leading-7 text-stone-500">写一个名字也可以，写一句也可以。</p>
-            </div>
+          <div className="mb-4 flex justify-end">
             <motion.p
               key={response}
               initial={{ opacity: 0, y: 8 }}
@@ -74,42 +63,14 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
               {response}
             </motion.p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setFocused(true)}
-            className={`mt-6 flex w-full items-center gap-4 rounded-[1.75rem] border px-4 py-4 text-left transition sm:px-5 ${
-              entryOpen
-                ? "border-white/10 bg-white/[0.045]"
-                : "border-white/7 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.035]"
-            }`}
-          >
-            <span className="text-xs uppercase tracking-[0.3em] text-stone-600">落笔面</span>
-            <span className="h-px flex-1 bg-white/8" />
-            <span className="text-xs text-stone-500">{entryOpen ? "正在靠近" : "轻点展开"}</span>
-          </button>
-
-          <AnimatePresence initial={false}>
-            {entryOpen ? (
-              <motion.div
-                key="true-thing"
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: "auto", marginTop: 18 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.42, ease: motionEase }}
-              >
-                <label className="block space-y-4">
-                  <textarea
-                    className={`${textareaClassName} min-h-44`}
-                    placeholder="写一个名字也可以。"
-                    value={daily.trueThing}
-                    onFocus={() => setFocused(true)}
-                    onChange={(event) => update("trueThing", event.target.value)}
-                  />
-                </label>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+          <textarea
+            className={`${textareaClassName} min-h-44`}
+            placeholder="在这里待一会。"
+            value={daily.trueThing}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onChange={(event) => update("trueThing", event.target.value)}
+          />
         </div>
       </motion.div>
 

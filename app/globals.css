@@ -13,6 +13,8 @@
   --focus-ring: rgba(205, 178, 137, 0.38);
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
+  --gx: 50vw;
+  --gy: 40vh;
 }
 
 @theme inline {

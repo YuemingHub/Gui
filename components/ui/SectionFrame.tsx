@@ -27,8 +27,7 @@ export function SectionFrame({ title, description, quote, action, children }: Se
         className="relative flex flex-col gap-5 border-b border-white/8 pb-6 sm:flex-row sm:items-end sm:justify-between"
       >
         <div className="max-w-3xl">
-          <p className="text-[11px] uppercase tracking-[0.32em] text-stone-600">回到自己</p>
-          <h2 className="mt-4 text-[1.9rem] font-medium tracking-[-0.03em] text-stone-100 sm:text-[2.35rem] sm:leading-[1.08]">{title}</h2>
+          <h2 className="text-[1.9rem] font-medium tracking-[-0.03em] text-stone-100 sm:text-[2.35rem] sm:leading-[1.08]">{title}</h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-400 sm:text-[15px]">{description}</p>
           {quote ? (
             <motion.p
