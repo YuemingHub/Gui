@@ -5,24 +5,38 @@ import { useEffect, useRef, useState } from "react";
 
 type Ripple = { id: number; x: number; y: number };
 
-export function GuiHero({ onEnter }: { onEnter: () => void }) {
+export function GuiHero({
+  onEnter,
+  activated,
+}: {
+  onEnter: () => void;
+  activated: boolean;
+}) {
   const [breathing, setBreathing] = useState(false);
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const enterCalledRef = useRef(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // After entrance, begin breathing + sonar
   useEffect(() => {
+    if (!activated) {
+      setBreathing(false);
+      return;
+    }
     const t = setTimeout(() => setBreathing(true), 2800);
     return () => clearTimeout(t);
-  }, []);
+  }, [activated]);
 
-  // 3D tilt — mouse proximity
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(mouseY, [-240, 240], [7, -7]), { stiffness: 45, damping: 22 });
-  const rotateY = useSpring(useTransform(mouseX, [-240, 240], [-7, 7]), { stiffness: 45, damping: 22 });
+  const rotateX = useSpring(useTransform(mouseY, [-240, 240], [7, -7]), {
+    stiffness: 45,
+    damping: 22,
+  });
+  const rotateY = useSpring(useTransform(mouseX, [-240, 240], [-7, 7]), {
+    stiffness: 45,
+    damping: 22,
+  });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -48,36 +62,40 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
     spawnRipple(x, y);
     if (!enterCalledRef.current) {
       enterCalledRef.current = true;
-      setTimeout(onEnter, 480);
+      setTimeout(onEnter, 680);
     }
   };
 
   return (
     <div
       ref={containerRef}
-      className="relative flex cursor-pointer flex-col items-center overflow-visible"
+      className={`relative flex flex-col items-center overflow-visible ${activated ? "cursor-pointer" : ""}`}
       style={{ perspective: "1000px" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onClick={(e) => triggerEnter(e.clientX, e.clientY)}
+      onClick={(e) => {
+        if (!activated) return;
+        triggerEnter(e.clientX, e.clientY);
+      }}
       onTouchStart={(e) => {
         const t = e.touches[0];
         if (t) touchStartRef.current = { x: t.clientX, y: t.clientY };
       }}
       onTouchEnd={(e) => {
+        if (!activated) return;
         const t = e.changedTouches[0];
         const start = touchStartRef.current;
         touchStartRef.current = null;
         if (!start || !t) return;
-        // Only fire if it was a tap (< 12px movement), not a scroll gesture
         if (Math.abs(t.clientX - start.x) < 12 && Math.abs(t.clientY - start.y) < 12) {
           triggerEnter(t.clientX, t.clientY);
         }
       }}
-      role="button"
-      tabIndex={0}
-      aria-label="归 — 进入"
+      role={activated ? "button" : undefined}
+      tabIndex={activated ? 0 : -1}
+      aria-label={activated ? "归，进入" : undefined}
       onKeyDown={(e) => {
+        if (!activated) return;
         if (e.key === "Enter" || e.key === " ") {
           const rect = containerRef.current?.getBoundingClientRect();
           triggerEnter(
@@ -87,7 +105,6 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
         }
       }}
     >
-      {/* Tap / click ripple bursts */}
       {ripples.map((r) => (
         <motion.span
           key={r.id}
@@ -109,8 +126,7 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
         />
       ))}
 
-      {/* Sonar rings — emit after breathing starts */}
-      {breathing &&
+      {activated && breathing &&
         [0, 2.2, 4.4].map((delay, i) => (
           <motion.span
             key={`sonar-${i}`}
@@ -134,10 +150,13 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
           />
         ))}
 
-      {/* Breathing halo */}
       <motion.div
         aria-hidden="true"
-        animate={breathing ? { opacity: [0, 0.07, 0], scale: [0.94, 1.1, 0.94] } : { opacity: 0 }}
+        animate={
+          activated && breathing
+            ? { opacity: [0, 0.07, 0], scale: [0.94, 1.1, 0.94] }
+            : { opacity: 0 }
+        }
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         className="pointer-events-none absolute inset-0 rounded-full"
         style={{
@@ -146,17 +165,18 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
         }}
       />
 
-      {/* 3D tilt */}
       <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
-        {/* Entrance */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          initial={false}
+          animate={
+            activated
+              ? { opacity: 1, scale: 1, filter: "blur(0px)" }
+              : { opacity: 0, scale: 0.48, filter: "blur(14px)" }
+          }
+          transition={{ duration: 2.6, ease: [0.16, 1, 0.3, 1], delay: activated ? 0.08 : 0 }}
         >
-          {/* Breath */}
           <motion.h1
-            animate={breathing ? { scale: [1, 1.014, 1] } : {}}
+            animate={activated && breathing ? { scale: [1, 1.014, 1] } : {}}
             transition={{ duration: 7, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
             className="select-none font-normal leading-none tracking-[-0.02em] text-stone-100"
             style={{ fontSize: "clamp(9rem, 28vw, 22rem)" }}
@@ -166,11 +186,10 @@ export function GuiHero({ onEnter }: { onEnter: () => void }) {
         </motion.div>
       </motion.div>
 
-      {/* Pinyin */}
       <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 2.6 }}
+        initial={false}
+        animate={activated ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+        transition={{ duration: 1.8, delay: activated ? 2.1 : 0 }}
         className="mt-6 text-[10px] uppercase tracking-[0.7em] text-stone-600"
         aria-hidden="true"
       >

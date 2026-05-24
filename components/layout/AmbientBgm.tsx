@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 export function AmbientBgm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -25,10 +26,11 @@ export function AmbientBgm() {
       }, 180);
     };
 
-    const tryPlay = async () => {
+    const startPlayback = async () => {
+      if (startedRef.current) return true;
       try {
-        audio.currentTime = audio.currentTime || 0;
         await audio.play();
+        startedRef.current = true;
         startFadeIn();
         return true;
       } catch {
@@ -36,29 +38,28 @@ export function AmbientBgm() {
       }
     };
 
-    let unlocked = false;
-
-    void tryPlay().then((played) => {
-      unlocked = played;
-    });
+    const onExplicitStart = () => {
+      void startPlayback();
+    };
 
     const resumeOnFirstGesture = () => {
-      if (unlocked) return;
-      void tryPlay().then((played) => {
+      if (startedRef.current) return;
+      void startPlayback().then((played) => {
         if (!played) return;
-        unlocked = true;
         window.removeEventListener("pointerdown", resumeOnFirstGesture);
         window.removeEventListener("keydown", resumeOnFirstGesture);
         window.removeEventListener("touchstart", resumeOnFirstGesture);
       });
     };
 
+    window.addEventListener("ambient-bgm-start", onExplicitStart as EventListener);
     window.addEventListener("pointerdown", resumeOnFirstGesture, { passive: true });
     window.addEventListener("keydown", resumeOnFirstGesture);
     window.addEventListener("touchstart", resumeOnFirstGesture, { passive: true });
 
     return () => {
       if (fadeTimer) clearInterval(fadeTimer);
+      window.removeEventListener("ambient-bgm-start", onExplicitStart as EventListener);
       window.removeEventListener("pointerdown", resumeOnFirstGesture);
       window.removeEventListener("keydown", resumeOnFirstGesture);
       window.removeEventListener("touchstart", resumeOnFirstGesture);
@@ -66,14 +67,7 @@ export function AmbientBgm() {
   }, []);
 
   return (
-    <audio
-      ref={audioRef}
-      autoPlay
-      loop
-      preload="auto"
-      aria-hidden="true"
-      className="hidden"
-    >
+    <audio ref={audioRef} loop preload="auto" aria-hidden="true" className="hidden">
       <source src="/bgm/trackintime.mp3" type="audio/mpeg" />
     </audio>
   );

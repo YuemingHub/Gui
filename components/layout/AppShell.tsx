@@ -69,11 +69,11 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
   const activeSection = useSyncExternalStore(subscribeToHash, readHashSection, getServerSection);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [entranceActivated, setEntranceActivated] = useState(false);
   const greeting = useMemo(() => getGreeting(), []);
   const prevSaveRef = useRef(saveMessage);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Subtle save toast — appears briefly when data is written
   useEffect(() => {
     if (saveMessage && saveMessage !== prevSaveRef.current) {
       prevSaveRef.current = saveMessage;
@@ -86,7 +86,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
     };
   }, [saveMessage]);
 
-  // Cursor glow — lerp toward mouse/touch
   useEffect(() => {
     let targetX = window.innerWidth / 2;
     let targetY = window.innerHeight * 0.4;
@@ -127,16 +126,14 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
     };
   }, []);
 
-  // Hero parallax — tied to scroll position
   const { scrollY } = useScroll();
-  const heroOpacity  = useTransform(scrollY, [0, 500], [1, 0]);
-  const heroScale    = useTransform(scrollY, [0, 500], [1, 0.88]);
-  const heroY        = useTransform(scrollY, [0, 500], [0, -80]);
-  const hintOpacity  = useTransform(scrollY, [0, 180], [1, 0]);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 500], [1, 0.88]);
+  const heroY = useTransform(scrollY, [0, 500], [0, -80]);
+  const hintOpacity = useTransform(scrollY, [0, 180], [1, 0]);
 
   const selectSection = (section: SectionId) => {
     if (section === "home") {
-      // Reset scroll instantly before switching — returns to 归
       window.scrollTo({ top: 0, behavior: "instant" });
     }
     window.history.replaceState(null, "", `#${section}`);
@@ -147,25 +144,31 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
     window.scrollTo({ top: window.innerHeight * 0.92, behavior: "smooth" });
   };
 
+  const activateEntrance = () => {
+    if (entranceActivated) return;
+    window.dispatchEvent(new CustomEvent("ambient-bgm-start"));
+    setEntranceActivated(true);
+  };
+
   const isHome = activeSection === "home";
 
   return (
     <div className="relative text-stone-100">
-      {/* Cursor glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-[2]"
-        style={{ background: "radial-gradient(circle 520px at var(--gx) var(--gy), rgba(200,173,134,0.09), transparent)" }}
+        style={{
+          background:
+            "radial-gradient(circle 520px at var(--gx) var(--gy), rgba(200,173,134,0.09), transparent)",
+        }}
       />
 
-      {/* Ambient blobs — fixed so they persist across scroll */}
       <div className="pointer-events-none fixed inset-0 z-0 opacity-80">
         <div className="absolute left-1/2 top-[6%] h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(210,185,152,0.16),transparent_58%)] blur-[5rem]" />
         <div className="absolute right-[-10rem] top-[12%] h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle,rgba(109,120,162,0.14),transparent_62%)] blur-[4rem]" />
         <div className="absolute left-[-9rem] top-[55%] h-[26rem] w-[26rem] rounded-full bg-[radial-gradient(circle,rgba(122,98,136,0.13),transparent_66%)] blur-[4.5rem]" />
       </div>
 
-      {/* Save toast — minimal, bottom-center */}
       <AnimatePresence>
         {showToast ? (
           <motion.div
@@ -182,22 +185,49 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
       </AnimatePresence>
 
       {isHome ? (
-        /* ─── 主页：剧场滚动体验 ─── */
         <div className="relative z-10">
-
-          {/* 序幕：归 — sticky，随滚动淡出 */}
           <div className="sticky top-0 z-0 flex h-[100dvh] flex-col items-center justify-center">
             <motion.div
               style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
               className="flex flex-col items-center"
             >
-              <GuiHero onEnter={scrollToContent} />
+              <GuiHero onEnter={scrollToContent} activated={entranceActivated} />
             </motion.div>
 
-            {/* 向下滑动提示 — pulsing dot + line */}
+            <AnimatePresence>
+              {!entranceActivated ? (
+                <motion.button
+                  key="entrance-gate"
+                  type="button"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, scale: 0.98, filter: "blur(6px)" }}
+                  transition={{ duration: 1.2, ease: motionEase }}
+                  onClick={activateEntrance}
+                  className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent text-center"
+                >
+                  <motion.span
+                    animate={{ opacity: [0.38, 0.8, 0.38] }}
+                    transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-[11px] uppercase tracking-[0.42em] text-stone-500"
+                  >
+                    轻触一下
+                  </motion.span>
+                  <motion.span
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.4, delay: 0.35, ease: motionEase }}
+                    className="mt-5 max-w-xs px-6 text-sm leading-7 text-stone-500 sm:text-[15px]"
+                  >
+                    让这一声慢慢起来，也让自己慢慢回来。
+                  </motion.span>
+                </motion.button>
+              ) : null}
+            </AnimatePresence>
+
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: entranceActivated ? 1 : 0 }}
               transition={{ duration: 1.8, delay: 4.2 }}
               style={{ opacity: hintOpacity }}
               className="absolute bottom-12 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
@@ -211,12 +241,9 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
             </motion.div>
           </div>
 
-          {/* 幕布上升：内容从下滚上来，覆盖序幕 */}
           <div className="relative z-10">
-            {/* 渐变桥：透明 → 背景色，让内容自然浮现 */}
             <div className="pointer-events-none h-40 bg-gradient-to-b from-transparent to-[#0c1014]" />
 
-            {/* 第一幕：时间问候 */}
             <section className="bg-[#0c1014] px-5 pb-36 sm:px-12 lg:px-20">
               <div className="mx-auto max-w-3xl">
                 <motion.div
@@ -241,7 +268,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
               </div>
             </section>
 
-            {/* 第二幕：留白（写字区） */}
             <section className="bg-[#0c1014] px-5 pb-36 sm:px-12 lg:px-20">
               <div className="mx-auto max-w-3xl">
                 <motion.div
@@ -256,7 +282,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
               </div>
             </section>
 
-            {/* 第三幕：其他房间 */}
             <section className="bg-[#0c1014] px-5 pb-[calc(5rem+var(--sab))] sm:px-12 lg:px-20">
               <div className="mx-auto max-w-3xl">
                 <motion.div
@@ -272,7 +297,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
             </section>
           </div>
 
-          {/* 备份按钮 — 右上角，极淡 */}
           <div className="fixed right-5 top-[calc(1.25rem+var(--sat))] z-50 sm:right-9 lg:right-12">
             <button
               type="button"
@@ -283,7 +307,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
             </button>
           </div>
 
-          {/* 备份面板 */}
           <AnimatePresence>
             {toolsOpen ? (
               <motion.div
@@ -306,14 +329,16 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
           </AnimatePresence>
         </div>
       ) : (
-        /* ─── 房间视图 ─── */
         <motion.div
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
           className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col px-5 pb-[calc(1.5rem+var(--sab))] pt-[calc(1.25rem+var(--sat))] sm:px-9 sm:pb-[calc(2rem+var(--sab))] sm:pt-[calc(1.75rem+var(--sat))] lg:px-12 lg:pb-[calc(3rem+var(--sab))] lg:pt-[calc(2.5rem+var(--sat))]"
         >
-          <motion.header variants={slowFadeUp} className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <motion.header
+            variants={slowFadeUp}
+            className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"
+          >
             <div className="max-w-xl">
               <button
                 type="button"
