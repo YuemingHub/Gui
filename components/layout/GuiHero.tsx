@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 type Ripple = { id: number; x: number; y: number };
 
@@ -12,20 +12,11 @@ export function GuiHero({
   onEnter: () => void;
   activated: boolean;
 }) {
-  const [breathing, setBreathing] = useState(false);
+  const [breathing] = useState(true);
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const enterCalledRef = useRef(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    if (!activated) {
-      setBreathing(false);
-      return;
-    }
-    const t = setTimeout(() => setBreathing(true), 2800);
-    return () => clearTimeout(t);
-  }, [activated]);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);

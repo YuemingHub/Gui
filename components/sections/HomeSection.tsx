@@ -65,7 +65,7 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
           </div>
           <textarea
             className={`${textareaClassName} min-h-44`}
-            placeholder="在这里待一会。"
+            placeholder="写下今天真正需要照看的一件事。可以很短。"
             value={daily.trueThing}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}

@@ -69,7 +69,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
   const activeSection = useSyncExternalStore(subscribeToHash, readHashSection, getServerSection);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [entranceActivated, setEntranceActivated] = useState(false);
   const greeting = useMemo(() => getGreeting(), []);
   const prevSaveRef = useRef(saveMessage);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -144,12 +143,6 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
     window.scrollTo({ top: window.innerHeight * 0.92, behavior: "smooth" });
   };
 
-  const activateEntrance = () => {
-    if (entranceActivated) return;
-    window.dispatchEvent(new CustomEvent("ambient-bgm-start"));
-    setEntranceActivated(true);
-  };
-
   const isHome = activeSection === "home";
 
   return (
@@ -191,43 +184,37 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
               style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
               className="flex flex-col items-center"
             >
-              <GuiHero onEnter={scrollToContent} activated={entranceActivated} />
+              <GuiHero onEnter={scrollToContent} activated />
             </motion.div>
 
-            <AnimatePresence>
-              {!entranceActivated ? (
-                <motion.button
-                  key="entrance-gate"
-                  type="button"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.98, filter: "blur(6px)" }}
-                  transition={{ duration: 1.2, ease: motionEase }}
-                  onClick={activateEntrance}
-                  className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent text-center"
-                >
-                  <motion.span
-                    animate={{ opacity: [0.38, 0.8, 0.38] }}
-                    transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-[11px] uppercase tracking-[0.42em] text-stone-500"
-                  >
-                    轻触一下
-                  </motion.span>
-                  <motion.span
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1.4, delay: 0.35, ease: motionEase }}
-                    className="mt-5 max-w-xs px-6 text-sm leading-7 text-stone-500 sm:text-[15px]"
-                  >
-                    让这一声慢慢起来，也让自己慢慢回来。
-                  </motion.span>
-                </motion.button>
-              ) : null}
-            </AnimatePresence>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.2, ease: motionEase }}
+              onClick={scrollToContent}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent text-center"
+            >
+              <motion.span
+                animate={{ opacity: [0.38, 0.8, 0.38] }}
+                transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[11px] uppercase tracking-[0.42em] text-stone-500"
+              >
+                直接开始记录
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.4, delay: 0.35, ease: motionEase }}
+                className="mt-5 max-w-xs px-6 text-sm leading-7 text-stone-500 sm:text-[15px]"
+              >
+                先不用准备得很完整，先把今天那件真事放进来。
+              </motion.span>
+            </motion.button>
 
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: entranceActivated ? 1 : 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 1.8, delay: 4.2 }}
               style={{ opacity: hintOpacity }}
               className="absolute bottom-12 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
