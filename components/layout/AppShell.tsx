@@ -86,6 +86,8 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
   }, [saveMessage]);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let targetX = window.innerWidth / 2;
     let targetY = window.innerHeight * 0.4;
     let currentX = targetX;
@@ -189,27 +191,22 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
 
             <motion.button
               type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.2, ease: motionEase }}
               onClick={scrollToContent}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent text-center"
+              className="absolute bottom-[15%] left-1/2 z-20 flex w-[min(22rem,calc(100%-3rem))] -translate-x-1/2 flex-col items-center rounded-full border border-white/6 bg-[#0c1014]/35 px-5 py-3 text-center backdrop-blur-sm transition hover:border-white/10 hover:bg-white/[0.06]"
             >
               <motion.span
-                animate={{ opacity: [0.38, 0.8, 0.38] }}
+                animate={{ opacity: [0.38, 0.72, 0.38] }}
                 transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-                className="text-[11px] uppercase tracking-[0.42em] text-stone-500"
+                className="text-[10px] uppercase tracking-[0.42em] text-stone-600"
               >
-                直接开始记录
+                先停一下
               </motion.span>
-              <motion.span
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.4, delay: 0.35, ease: motionEase }}
-                className="mt-5 max-w-xs px-6 text-sm leading-7 text-stone-500 sm:text-[15px]"
-              >
-                先不用准备得很完整，先把今天那件真事放进来。
-              </motion.span>
+              <span className="mt-2 text-xs leading-6 text-stone-500 sm:text-sm">
+                把今天那件真事轻轻放进来。
+              </span>
             </motion.button>
 
             <motion.div
@@ -290,7 +287,7 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
               onClick={() => setToolsOpen((v) => !v)}
               className="rounded-full border border-white/8 bg-white/[0.03] px-4 py-2.5 text-xs text-stone-700 opacity-40 transition hover:border-white/12 hover:bg-white/[0.06] hover:text-stone-300 hover:opacity-100"
             >
-              {toolsOpen ? "收起" : "备份"}
+              {toolsOpen ? "收起" : "本地数据"}
             </button>
           </div>
 
@@ -340,7 +337,7 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
               onClick={() => setToolsOpen((value) => !value)}
               className="shrink-0 rounded-full border border-white/8 bg-white/[0.03] px-4 py-2.5 text-xs text-stone-500 transition hover:border-white/12 hover:bg-white/[0.06] hover:text-stone-300"
             >
-              {toolsOpen ? "收起" : "备份"}
+              {toolsOpen ? "收起" : "本地数据"}
             </button>
           </motion.header>
 

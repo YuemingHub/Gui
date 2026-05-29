@@ -28,13 +28,12 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
   };
 
   const response = useMemo(() => {
-    if (daily.didReturn.trim()) return "已经替你轻轻记下了。";
-    if (daily.notReceiving.trim()) return "边界也先放在这里了。";
-    if (daily.trueThing.trim()) return "这一件事，已经留在眼前。";
-    return "你也可以什么都不写，只先在这里停一下。";
+    if (daily.didReturn.trim()) return "已经安静留在这里了。";
+    if (daily.notReceiving.trim()) return "这条边界也先放下了。";
+    if (daily.trueThing.trim()) return "这件真事已经在眼前。";
+    return "也可以什么都不写，只先停一下。";
   }, [daily.didReturn, daily.notReceiving, daily.trueThing]);
 
-  // Card warms when focused OR has content — space responds to your presence
   const isWarm = focused || Boolean(daily.trueThing.trim());
 
   return (

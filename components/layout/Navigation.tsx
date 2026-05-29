@@ -5,12 +5,12 @@ import type { SectionId } from "@/app/lib/types";
 import { cardLift, motionEase, staggerContainer } from "@/components/ui/motion";
 
 const items: { id: SectionId; label: string; hint: string; mood: string; offset: string }[] = [
-  { id: "truths", label: "真戏", hint: "把真事留下来", mood: "向前", offset: "sm:translate-y-4" },
-  { id: "clearings", label: "清场", hint: "把缠绕放远一点", mood: "抽离", offset: "sm:-translate-y-2" },
-  { id: "boundaries", label: "静音", hint: "今天不再接住什么", mood: "收束", offset: "sm:translate-y-6" },
-  { id: "rhythm", label: "节奏", hint: "看见还能前进多少", mood: "呼吸", offset: "sm:translate-y-0" },
-  { id: "garden", label: "花园", hint: "留住已经在生长的", mood: "漂浮", offset: "sm:-translate-y-3" },
-  { id: "monthly", label: "月清", hint: "慢慢沉下来回看", mood: "沉降", offset: "sm:translate-y-3" },
+  { id: "truths", label: "真事", hint: "只留下真正要照看的", mood: "留一件", offset: "sm:translate-y-4" },
+  { id: "clearings", label: "清场", hint: "把缠绕放远一点", mood: "放远", offset: "sm:-translate-y-2" },
+  { id: "boundaries", label: "静音", hint: "今天不再接住什么", mood: "关小", offset: "sm:translate-y-6" },
+  { id: "rhythm", label: "节奏", hint: "看见还能前进多少", mood: "慢一点", offset: "sm:translate-y-0" },
+  { id: "garden", label: "留存", hint: "留住已经在生长的", mood: "放着", offset: "sm:-translate-y-3" },
+  { id: "monthly", label: "月清", hint: "慢慢沉下来回看", mood: "沉下", offset: "sm:translate-y-3" },
 ];
 
 type NavigationProps = {

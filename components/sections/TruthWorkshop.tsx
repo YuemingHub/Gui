@@ -80,7 +80,7 @@ export function TruthWorkshop({ truths, onChange }: TruthWorkshopProps) {
 
   return (
     <SectionFrame
-      title="真戏"
+      title="真事"
       description="只照看 1–3 件真正重要的事。先看清已经留下来的，再决定要不要添新的。"
       quote="少一点，反而更能照看。"
       action={
@@ -187,7 +187,7 @@ export function TruthWorkshop({ truths, onChange }: TruthWorkshopProps) {
                 onClick={save}
                 className="w-full rounded-full bg-stone-100 px-4 py-3 text-sm text-stone-900 transition hover:bg-stone-200"
               >
-                {editingId ? "保存修改" : "加入工坊"}
+                {editingId ? "保存修改" : "加入真事"}
               </button>
             </div>
           </motion.div>
