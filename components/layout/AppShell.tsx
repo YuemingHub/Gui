@@ -248,6 +248,9 @@ export function AppShell({ saveMessage, onExport, onImport, onReset, children }:
                   <p className="mt-6 text-base leading-8 text-stone-400 sm:text-[17px] sm:leading-9">
                     {greeting.line}
                   </p>
+                  <p className="mt-6 border-l border-white/8 pl-4 text-sm leading-7 text-stone-600">
+                    这里不是一个必须正确的地方。在这个草台班子的世界里，先认真活自己。
+                  </p>
                 </motion.div>
               </div>
             </section>
