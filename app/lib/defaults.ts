@@ -25,7 +25,7 @@ export const defaultDailyState = (): DailyState => ({
   why: "",
   smallestStep: "",
   lowPowerVersion: "",
-  notReceiving: "不接临时情绪劳动\n不刷行业焦虑\n不参与无意义争论",
+  notReceiving: "",
   takenAwayBy: "",
   didReturn: "",
   tomorrowLess: "",
