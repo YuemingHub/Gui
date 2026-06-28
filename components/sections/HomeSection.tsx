@@ -73,7 +73,7 @@ export function HomeSection({ daily, onChange }: HomeSectionProps) {
         </div>
       </motion.div>
 
-      <motion.div variants={gentleFade} className="space-y-3">
+      <motion.div variants={gentleFade} className="space-y-5">
         <AnimatePresence initial={false}>
           {showBoundary ? (
             <motion.div
