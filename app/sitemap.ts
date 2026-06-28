@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://yueminghub.github.io/Gui/",
+      url: "https://ymai.fun/",
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,

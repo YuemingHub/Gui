@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://yueminghub.github.io/Gui/sitemap.xml",
+    sitemap: "https://ymai.fun/sitemap.xml",
   };
 }
