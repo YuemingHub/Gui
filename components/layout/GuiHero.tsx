@@ -8,9 +8,11 @@ type Ripple = { id: number; x: number; y: number };
 export function GuiHero({
   onEnter,
   activated,
+  showCaption = true,
 }: {
   onEnter: () => void;
   activated: boolean;
+  showCaption?: boolean;
 }) {
   const [breathing] = useState(true);
   const [ripples, setRipples] = useState<Ripple[]>([]);
@@ -177,15 +179,17 @@ export function GuiHero({
         </motion.div>
       </motion.div>
 
-      <motion.p
-        initial={false}
-        animate={activated ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-        transition={{ duration: 1.8, delay: activated ? 2.1 : 0 }}
-        className="mt-6 text-[10px] uppercase tracking-[0.7em] text-stone-600"
-        aria-hidden="true"
-      >
-        guī
-      </motion.p>
+      {showCaption && (
+        <motion.p
+          initial={false}
+          animate={activated ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          transition={{ duration: 1.8, delay: activated ? 2.1 : 0 }}
+          className="mt-6 text-[10px] uppercase tracking-[0.7em] text-stone-600"
+          aria-hidden="true"
+        >
+          guī
+        </motion.p>
+      )}
     </div>
   );
 }

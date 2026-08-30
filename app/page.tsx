@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GuiHero } from "@/components/layout/GuiHero";
 
 export const metadata: Metadata = {
   title: "ymai.me",
@@ -39,47 +40,8 @@ function FinalHome() {
         </header>
 
         <div className="relative flex flex-1 flex-col items-center justify-center px-6 pb-16">
-          <div
-            className="relative flex items-center justify-center"
-            style={{ fontSize: "clamp(9rem, 30vw, 19rem)" }}
-          >
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute h-[1.7em] w-[1.7em] rounded-full"
-              style={{
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                background:
-                  "radial-gradient(circle, rgba(200,173,134,0.4), transparent 60%)",
-                filter: "blur(40px)",
-                animation: "homeHalo 14s ease-in-out infinite",
-              }}
-            />
-            {[0, 5.4, 10.8].map((delay) => (
-              <span
-                key={delay}
-                aria-hidden="true"
-                className="pointer-events-none absolute h-[1em] w-[1em] rounded-full border"
-                style={{
-                  left: "50%",
-                  top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  opacity: 0,
-                  borderColor: "rgba(200,173,134,0.45)",
-                  animation: `homeSonar 16s linear ${delay}s infinite`,
-                }}
-              />
-            ))}
-            <div style={{ animation: "homeFade 2.4s ease-out both" }}>
-              <h1
-                className="relative select-none font-normal leading-none tracking-[-0.02em] text-stone-100"
-                style={{ fontSize: "1em", animation: "homeBreathe 7s ease-in-out infinite alternate" }}
-              >
-                归
-              </h1>
-            </div>
-          </div>
+          {/* 原版 /gui 的 GuiHero：特效代码原样平移（声呐环 / 光晕 / 点击涟漪 / 微倾 / 呼吸） */}
+          <GuiHero activated onEnter={() => {}} showCaption={false} />
 
           <a
             href="/return/"
