@@ -53,10 +53,10 @@ function FinalHome() {
                 background:
                   "radial-gradient(circle, rgba(200,173,134,0.4), transparent 60%)",
                 filter: "blur(40px)",
-                animation: "homeHalo 7s ease-in-out infinite",
+                animation: "homeHalo 14s ease-in-out infinite",
               }}
             />
-            {[0, 2.2, 4.4].map((delay) => (
+            {[0, 5.4, 10.8].map((delay) => (
               <span
                 key={delay}
                 aria-hidden="true"
@@ -67,7 +67,7 @@ function FinalHome() {
                   transform: "translate(-50%, -50%)",
                   opacity: 0,
                   borderColor: "rgba(200,173,134,0.45)",
-                  animation: `homeSonar 5.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s infinite`,
+                  animation: `homeSonar 16s linear ${delay}s infinite`,
                 }}
               />
             ))}

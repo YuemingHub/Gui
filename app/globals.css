@@ -137,22 +137,26 @@ textarea {
   }
 }
 
-/* ymai.me final home — restored original GuiHero halo: three sonar rings
-   expanding outward (0.42 → 2.8, opacity 0 → 0.09 → 0, 5.5s, staggered),
-   a very faint breathing halo, and a barely-there 归 scale breathe — plus the
-   slow fade-in. All disabled by the global prefers-reduced-motion override. */
+/* ymai.me final home — slow fullscreen sonar: each ring is born at the center
+   of 归 and expands past the screen diagonal (scale 12) over 16s, three rings
+   staggered 5.4s apart; a very faint breathing halo and a barely-there 归
+   scale breathe. All disabled by the global prefers-reduced-motion override. */
 @keyframes homeSonar {
   0% {
-    transform: translate(-50%, -50%) scale(0.42);
+    transform: translate(-50%, -50%) scale(0.4);
     opacity: 0;
   }
 
-  32% {
-    opacity: 0.09;
+  10% {
+    opacity: 0.08;
+  }
+
+  55% {
+    opacity: 0.05;
   }
 
   100% {
-    transform: translate(-50%, -50%) scale(2.8);
+    transform: translate(-50%, -50%) scale(12);
     opacity: 0;
   }
 }
