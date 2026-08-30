@@ -136,3 +136,19 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ymai.me final home — slow fullscreen sonar: each ring is born at the center
+   of 归 and expands past the screen diagonal (scale 12) over 16s, three rings
+   staggered 5.4s apart; a very faint breathing halo and a barely-there 归
+   scale breathe. All disabled by the global prefers-reduced-motion override. */
+@keyframes homeFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
