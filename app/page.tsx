@@ -49,6 +49,7 @@ function FinalHome() {
               style={{
                 left: "50%",
                 top: "50%",
+                transform: "translate(-50%, -50%)",
                 background:
                   "radial-gradient(circle, rgba(200,173,134,0.4), transparent 60%)",
                 filter: "blur(40px)",
@@ -63,6 +64,8 @@ function FinalHome() {
                 style={{
                   left: "50%",
                   top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  opacity: 0,
                   borderColor: "rgba(200,173,134,0.45)",
                   animation: `homeSonar 5.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s infinite`,
                 }}
