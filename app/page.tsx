@@ -39,37 +39,43 @@ function FinalHome() {
         </header>
 
         <div className="relative flex flex-1 flex-col items-center justify-center px-6 pb-16">
-          <div className="relative flex items-center justify-center">
+          <div
+            className="relative flex items-center justify-center"
+            style={{ fontSize: "clamp(9rem, 30vw, 19rem)" }}
+          >
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 top-1/2 h-[min(88vw,34rem)] w-[min(88vw,34rem)] -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(200,173,134,0.13), transparent 62%)",
-                filter: "blur(52px)",
-                animation: "homeGlow 10s ease-in-out infinite alternate",
-              }}
-            />
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute h-[min(76vw,29rem)] w-[min(76vw,29rem)] rounded-full border"
+              className="pointer-events-none absolute h-[1.7em] w-[1.7em] rounded-full"
               style={{
                 left: "50%",
                 top: "50%",
-                borderColor: "rgba(200,173,134,0.24)",
-                animation: "homeRing 12s ease-in-out infinite",
+                background:
+                  "radial-gradient(circle, rgba(200,173,134,0.4), transparent 60%)",
+                filter: "blur(40px)",
+                animation: "homeHalo 7s ease-in-out infinite",
               }}
             />
-            <h1
-              className="relative select-none font-normal leading-none tracking-[-0.02em] text-stone-100"
-              style={{
-                fontSize: "clamp(9rem, 30vw, 19rem)",
-                textShadow: "0 0 90px rgba(200,173,134,0.16)",
-                animation: "homeFade 2.4s ease-out both",
-              }}
-            >
-              归
-            </h1>
+            {[0, 2.2, 4.4].map((delay) => (
+              <span
+                key={delay}
+                aria-hidden="true"
+                className="pointer-events-none absolute h-[1em] w-[1em] rounded-full border"
+                style={{
+                  left: "50%",
+                  top: "50%",
+                  borderColor: "rgba(200,173,134,0.45)",
+                  animation: `homeSonar 5.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s infinite`,
+                }}
+              />
+            ))}
+            <div style={{ animation: "homeFade 2.4s ease-out both" }}>
+              <h1
+                className="relative select-none font-normal leading-none tracking-[-0.02em] text-stone-100"
+                style={{ fontSize: "1em", animation: "homeBreathe 7s ease-in-out infinite alternate" }}
+              >
+                归
+              </h1>
+            </div>
           </div>
 
           <a
@@ -88,7 +94,7 @@ function FinalHome() {
           className="font-medium leading-[1.4] tracking-[-0.02em] text-stone-100"
           style={{ fontSize: "clamp(1.9rem, 5.5vw, 3.1rem)" }}
         >
-          把散出去的，
+          把散出去的
           <br />
           慢慢收回来
         </h2>

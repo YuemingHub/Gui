@@ -123,79 +123,6 @@ textarea {
   }
 }
 
-/* Final home (ymai.me): very faint ring breathing / glow / slow fade only. */
-@keyframes homeRing {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.66;
-  }
-
-  50% {
-    transform: translate(-50%, -50%) scale(1.04);
-    opacity: 0.92;
-  }
-}
-
-@keyframes homeGlow {
-  0% {
-    opacity: 0.55;
-  }
-
-  100% {
-    opacity: 0.95;
-  }
-}
-
-@keyframes homeFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes homeGlow {
-  0% {
-    opacity: 0.65;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-}
-
-@keyframes homeRing {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.035);
-  }
-}
-
-@keyframes homeFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -210,29 +137,46 @@ textarea {
   }
 }
 
-/* ymai.me final home (frozen design 2026-08-30): faint ring breathing,
-   soft glow, slow fade — all non-intrusive, disabled by the global
-   prefers-reduced-motion override above. */
-@keyframes homeRing {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.65;
+/* ymai.me final home — restored original GuiHero halo: three sonar rings
+   expanding outward (0.42 → 2.8, opacity 0 → 0.09 → 0, 5.5s, staggered),
+   a very faint breathing halo, and a barely-there 归 scale breathe — plus the
+   slow fade-in. All disabled by the global prefers-reduced-motion override. */
+@keyframes homeSonar {
+  0% {
+    transform: translate(-50%, -50%) scale(0.42);
+    opacity: 0;
   }
 
-  50% {
-    transform: translate(-50%, -50%) scale(1.045);
-    opacity: 1;
+  32% {
+    opacity: 0.09;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.8);
+    opacity: 0;
   }
 }
 
-@keyframes homeGlow {
-  0% {
-    opacity: 0.6;
+@keyframes homeHalo {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
   }
 
-  100% {
-    opacity: 1;
+  50% {
+    opacity: 0.07;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes homeBreathe {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.014);
   }
 }
 
