@@ -25,7 +25,7 @@ function FinalHome() {
   return (
     <main className="relative">
       {/* ---- 第一屏 ---- */}
-      <section className="relative flex min-h-[100dvh] flex-col">
+      <section className="relative flex min-h-[100dvh] flex-col overflow-hidden">
         <header className="flex items-center justify-between px-6 pt-[calc(1.15rem+var(--sat))] sm:px-10">
           <span className="select-none text-[11px] tracking-[0.22em] text-stone-600">
             ymai.me
