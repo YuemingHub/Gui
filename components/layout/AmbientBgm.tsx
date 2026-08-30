@@ -68,7 +68,10 @@ export function AmbientBgm() {
 
   return (
     <audio ref={audioRef} loop preload="auto" aria-hidden="true" className="hidden">
-      <source src="/bgm/trackintime.mp3" type="audio/mpeg" />
+      <source
+        src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/bgm/trackintime.mp3`}
+        type="audio/mpeg"
+      />
     </audio>
   );
 }
