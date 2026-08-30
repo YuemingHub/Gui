@@ -1,17 +1,71 @@
 "use client";
 
+import { useEffect } from "react";
 import { GuiHero } from "@/components/layout/GuiHero";
 
 /**
- * Final ymai.me home (client): the original /gui GuiHero effects, ported
- * verbatim (motion sonar rings, breathing halo, click ripples, tilt, 归
- * breathing) with the caption suppressed via showCaption={false}.
+ * Final ymai.me home (client): the original /gui effects ported verbatim —
+ * the AppShell mouse-following warm light (this file) and the GuiHero
+ * motion effects (sonar rings, halo, click ripples, tilt, 归 breathing).
  */
 export function FinalHome() {
+  // 原版 AppShell 的鼠标暖光追踪：--gx/--gy 平滑跟随（rAF 缓动，reduced-motion 直关）
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight * 0.4;
+    let currentX = targetX;
+    let currentY = targetY;
+    let rafId: number;
+
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.055;
+      currentY += (targetY - currentY) * 0.055;
+      document.documentElement.style.setProperty("--gx", `${currentX}px`);
+      document.documentElement.style.setProperty("--gy", `${currentY}px`);
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+
+    const onMove = (e: MouseEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+    };
+
+    const onTouch = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) {
+        targetX = t.clientX;
+        targetY = t.clientY;
+      }
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onTouch, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onTouch);
+    };
+  }, []);
+
   return (
     <main className="relative">
+      {/* 原版 AppShell 的鼠标跟随暖光层 */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[2]"
+        style={{
+          background:
+            "radial-gradient(circle 520px at var(--gx) var(--gy), rgba(200,173,134,0.09), transparent)",
+        }}
+      />
+
       {/* ---- 第一屏 ---- */}
-      <section className="relative flex min-h-[100dvh] flex-col overflow-hidden">
+      <section className="relative z-10 flex min-h-[100dvh] flex-col overflow-hidden">
         <header className="flex items-center justify-between px-6 pt-[calc(1.15rem+var(--sat))] sm:px-10">
           <span className="select-none text-[11px] tracking-[0.22em] text-stone-600">
             ymai.me
@@ -39,7 +93,7 @@ export function FinalHome() {
       </section>
 
       {/* ---- 第二屏 ---- */}
-      <section className="relative flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
+      <section className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
         <h2
           className="font-medium leading-[1.4] tracking-[-0.02em] text-stone-100"
           style={{ fontSize: "clamp(1.9rem, 5.5vw, 3.1rem)" }}
@@ -54,7 +108,7 @@ export function FinalHome() {
       </section>
 
       {/* ---- 底部：仅备案 ---- */}
-      <footer className="pb-[calc(1.4rem+var(--sab))] pt-12 text-center">
+      <footer className="relative z-10 pb-[calc(1.4rem+var(--sab))] pt-12 text-center">
         <a
           href="https://beian.miit.gov.cn/"
           target="_blank"
