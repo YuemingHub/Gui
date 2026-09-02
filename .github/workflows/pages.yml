@@ -1,9 +1,12 @@
 name: Deploy Next.js site to Pages
 
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
+    inputs:
+      confirm_public_static_publish:
+        description: 'Type PUBLISH to confirm static Pages deploy (no /api on Pages)'
+        required: true
+        default: 'DO_NOT_PUBLISH'
 
 permissions:
   contents: read
@@ -15,7 +18,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish guard
+        run: |
+          if [ "${{ github.event.inputs.confirm_public_static_publish }}" != "PUBLISH" ]; then
+            echo "Refusing to publish. The Self Space conversation surface requires the"
+            echo "Return backend at same-origin /api, which GitHub Pages cannot provide."
+            echo "The formal Self Space frontend is served with the Return runtime behind"
+            echo "nginx (see DEPLOYMENT.md). Re-run this workflow with"
+            echo "confirm_public_static_publish=PUBLISH only for the local-first marketing"
+            echo "surface, which must not include the conversation slice."
+            exit 1
+          fi
+
   build:
+    needs: guard
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
