@@ -2,7 +2,7 @@
 
 > Coordination target: 2026-08-29
 >
-> This document describes the future integration boundary. It does not change the current local-first MVP runtime by itself.
+> This document is the live integration boundary for the first Gui vertical slice. The frozen HTTP contract lives in Return `docs/r0/GUI_RETURN_API_CONTRACT.md`. The seven-module local space remains as recoverable provenance and is not auto-migrated.
 
 ## 1. Product relationship
 

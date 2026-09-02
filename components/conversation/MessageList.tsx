@@ -1,0 +1,114 @@
+"use client";
+
+import { useCallback, useEffect, useRef } from "react";
+import type { Message } from "@/app/lib/returnApi";
+
+type DisplayMessage = Message & { __loading?: boolean };
+
+function isSafety(m: Message): boolean {
+  return m.kind === "safety";
+}
+
+function isMeta(m: Message): boolean {
+  return m.kind === "opening" || m.kind === "carry_ack";
+}
+
+function renderText(m: DisplayMessage) {
+  // Keep line breaks exactly as stored; the conversation is verbatim.
+  return <span className="whitespace-pre-wrap break-words">{m.content}</span>;
+}
+
+export function MessageList({ messages }: { messages: DisplayMessage[] }) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
+
+  const scrollToBottom = useCallback(() => {
+    if (!stickToBottomRef.current) return;
+    requestAnimationFrame(() => {
+      const el = bottomRef.current;
+      if (!el) return;
+      void el.offsetHeight;
+      el.scrollIntoView({ block: "end" });
+    });
+  }, []);
+
+  const onScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distance < 96;
+  };
+
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (last && (last.role === "user" || last.__loading)) {
+      stickToBottomRef.current = true;
+    }
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onKeyboard = () => scrollToBottom();
+    const vv = window.visualViewport;
+    if (vv) vv.addEventListener("resize", onKeyboard);
+    window.addEventListener("orientationchange", onKeyboard);
+    return () => {
+      if (vv) vv.removeEventListener("resize", onKeyboard);
+      window.removeEventListener("orientationchange", onKeyboard);
+    };
+  }, [scrollToBottom]);
+
+  return (
+    <div
+      ref={scrollerRef}
+      onScroll={onScroll}
+      className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 sm:px-6"
+      id="messages-scroll"
+    >
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 pb-2">
+        {messages.map((m, i) => {
+          if (m.__loading) {
+            return (
+              <div key={"loading-" + i} className="flex justify-start">
+                <span className="text-lg text-stone-600">正在回应</span>
+              </div>
+            );
+          }
+          if (m.role === "user") {
+            return (
+              <div key={i} className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-md bg-[rgba(200,173,134,0.14)] px-4 py-2.5 text-[15px] leading-7 text-stone-100">
+                  {renderText(m)}
+                </div>
+              </div>
+            );
+          }
+          if (isSafety(m)) {
+            return (
+              <div key={i} className="flex justify-start">
+                <div className="max-w-full rounded-2xl border border-amber-300/25 bg-[rgba(200,173,134,0.08)] px-4 py-3 text-[15px] leading-7 text-stone-200">
+                  {renderText(m)}
+                </div>
+              </div>
+            );
+          }
+          if (isMeta(m)) {
+            return (
+              <div key={i} className="flex justify-start">
+                <p className="max-w-[88%] text-[15px] leading-7 text-stone-500">{renderText(m)}</p>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className="flex justify-start">
+              <p className="max-w-[88%] text-[15px] leading-7 text-stone-200">{renderText(m)}</p>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} className="h-6" />
+      </div>
+    </div>
+  );
+}
