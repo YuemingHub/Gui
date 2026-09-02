@@ -1,26 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { LocalSpace } from "@/app/LocalSpace";
 import { useReturnSession } from "@/app/hooks/useReturnSession";
 import { Composer } from "./Composer";
 import { Drawer } from "./Drawer";
-import { EnterScreen } from "./EnterScreen";
+import { IdentityGate } from "./IdentityGate";
 import { MessageList } from "./MessageList";
-
-type ConversationViewProps = {
-  onGoLocal: () => void;
-};
 
 type SessionApi = ReturnType<typeof useReturnSession>;
 
-export function ConversationView({ onGoLocal }: ConversationViewProps) {
+export function ConversationView() {
   const s = useReturnSession();
-  const chatting: boolean = s.phase === "chat" && Boolean(s.token);
+  // Whose space the local tools were opened for; it cannot outlive that person.
+  const [localSpaceOf, setLocalSpaceOf] = useState("");
+  const chatting: boolean = s.view === "chat";
 
   if (!chatting) {
-    return <EnterScreen onEnter={s.enter} />;
+    return (
+      <IdentityGate
+        checking={s.view === "loading"}
+        busy={s.busy}
+        error={s.gateError}
+        legacyAvailable={s.legacyAvailable}
+        onLogin={s.login}
+        onRegister={s.register}
+        onLegacyBrowser={s.openLegacySpace}
+      />
+    );
   }
-  return <ChatSurface key={s.token} session={s} onGoLocal={onGoLocal} />;
+  if (localSpaceOf === s.spaceKey) {
+    return <LocalSpace participantId={s.spaceKey} onBack={() => setLocalSpaceOf("")} />;
+  }
+  // Keyed on the participant: a new person must never inherit this transcript.
+  return (
+    <ChatSurface key={s.spaceKey} session={s} onGoLocal={() => setLocalSpaceOf(s.spaceKey)} />
+  );
 }
 
 function ChatSurface({
@@ -88,6 +103,12 @@ function ChatSurface({
           ＋
         </button>
       </header>
+
+      {s.legacyOpen ? (
+        <p className="border-b border-amber-300/20 bg-[rgba(200,173,134,0.07)] px-4 py-2.5 text-center text-[13px] leading-6 text-amber-200/80">
+          这台浏览器还在用旧的进入方式。请创建账号，以后凭账号回到自己的空间。
+        </p>
+      ) : null}
 
       <MessageList messages={s.messages} />
 
@@ -259,6 +280,10 @@ function ChatSurface({
           setDrawerOpen(false);
           setAboutOpen(true);
           setDeleteConfirm(false);
+        }}
+        onLogout={() => {
+          setDrawerOpen(false);
+          void s.logout();
         }}
         onGoLocal={onGoLocal}
       />

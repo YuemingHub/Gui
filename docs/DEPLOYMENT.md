@@ -77,7 +77,9 @@ node operator.js revoke --code <code>      # 撤销未用邀请码或参与者
 node operator.js delete --participant <id> # 服务端删除全部数据（对话/记忆/证据）
 ```
 
-邀请码单次使用、绑定浏览器 token（localStorage）。token 只存 hash（auth.js）。
+身份认的是人，不是浏览器：`r0_session` 是服务端会话 cookie（HttpOnly / SameSite=Strict / Path=/ / Secure），前端读不到也不存。`/api/register` 用一次性邀请码建立账号（`login_id` + 密码），`/api/login` 换回会话，`/api/logout` 只关掉这一次会话（不结束今天、不删数据）。
+
+过渡期例外：旧版前端把 bearer token 留在 `localStorage["gui_token"]`。新版只在门禁上一个明确按钮（`继续用这台浏览器上原来的空间`）后使用它，绝不自动进入；`/api/me` 认证通过或成功退出即删除它。Founder 绑定账号密码后删除这一整块。
 
 ## 3. Gui 前端构建与发布
 
@@ -85,7 +87,7 @@ node operator.js delete --participant <id> # 服务端删除全部数据（对�
 git clone git@github.com:YuemingHub/Gui.git /opt/gui-build
 cd /opt/gui-build
 npm ci --include=dev
-npm test                # 9/9 data-truth tests
+npm test                # 43/43（数据真相 + 身份门禁 + 请求层）
 npm run lint
 npm run build           # 静态导出 → out/
 rsync -a --delete out/ /var/www/self-space/gui/
@@ -135,7 +137,9 @@ server {
 - [ ] Return：`npm test` 69/69 PASS（部署机上真实执行）；systemd active；`ss -tlnp | grep 3000` 仅 127.0.0.1
 - [ ] Provider：`USER_LLM_*` 已配置且 **CF001 真实模型重放已人工评审**（`npm run alpha:canonical`，结果 PASS/REVISE/FAIL 三选一记录——这是 Founder Alpha 门禁的一部分，部署不替代评审）
 - [ ] 邀请码：`node operator.js invite` 已生成并私下交付 Founder
-- [ ] Gui：`npm test` 9/9、`npm run lint`、`npm run build` 全绿；`out/` 已发布
+- [ ] Gui：`npm test` 43/43、`npm run lint`、`npm run build` 全绿；`out/` 已发布
+- [ ] 身份：第二个人在同一浏览器（不清存储、不删 cookie）打开只看到门禁；`/api/me` 未认证必须返回 401
+- [ ] 身份：`退出这个空间` 只调用 `/api/logout`——对话与记录原样留在服务端，重新登录立即可见
 - [ ] nginx：`nginx -t` 通过；`/gui/` 可打开；`/api/state` 未认证返回 401（不是 404/502）
 - [ ] 端到端真实旅程：进入 → 发送 → 离开 → 回归（reality return 可见）→ 结束会话（带/不带 carry）→ 删除全部（真实删除）
 - [ ] 故障演练：停掉 provider（错误 key）→ Gui 显示「暂时没有连上。你刚才说的话都在，没有丢。」且重试不重复发言
