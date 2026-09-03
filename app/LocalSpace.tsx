@@ -21,10 +21,36 @@ const updateState = <K extends keyof AppState>(
 });
 
 // The original local-first seven-module space, preserved unchanged as a
-// secondary surface. It keeps its own localStorage state; nothing here is
+// secondary surface. Its state belongs to the participant, never to this
+// browser: while nobody is known there is nothing to open, and nothing here is
 // migrated to the backend implicitly.
-export function LocalSpace({ onBack }: { onBack: () => void }) {
-  const { state, setState, saveMessage, resetState, importState, exportState } = useAppStorage();
+export function LocalSpace({
+  participantId,
+  onBack,
+}: {
+  participantId: string;
+  onBack: () => void;
+}) {
+  if (!participantId) {
+    return (
+      <div className="relative z-10 flex min-h-[100dvh] items-center justify-center px-6">
+        <p className="text-sm leading-7 text-stone-500">正在确认你的空间…</p>
+      </div>
+    );
+  }
+  // Keyed on the person: writings left in memory cannot render for the next one.
+  return <LocalSpaceContent key={participantId} participantId={participantId} onBack={onBack} />;
+}
+
+function LocalSpaceContent({
+  participantId,
+  onBack,
+}: {
+  participantId: string;
+  onBack: () => void;
+}) {
+  const { state, setState, saveMessage, resetState, importState, exportState } =
+    useAppStorage(participantId);
 
   const renderSection = (section: SectionId) => {
     switch (section) {

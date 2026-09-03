@@ -2,18 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  callApi,
+  api as cookieApi,
+  apiWithLegacyToken,
   clearStoredToken,
-  enterWithCode,
+  fetchMe,
   loadStoredToken,
-  storeToken,
+  loginWithAccount,
+  logoutSession,
+  probeLegacyToken,
+  registerWithInvite,
   PROVIDER_DOWN_MESSAGE,
+  type LoginInput,
   type Message,
+  type RegisterInput,
   type SessionItem,
 } from "@/app/lib/returnApi";
+import {
+  createIdentity,
+  spaceKey,
+  type IdentityState,
+} from "@/app/lib/identity";
 import { decideDeleteAll, decideNetworkRetry } from "@/app/lib/sessionTruth";
-
-export type Phase = "enter" | "chat";
 
 interface StateMessageResult {
   error: string | null;
@@ -32,10 +41,34 @@ const LOADING_MESSAGE: Message = {
 type DisplayMessage = Message & { __loading?: boolean };
 type FailureKind = "provider" | "network" | "generic" | null;
 
+interface StatePayload {
+  returning: boolean;
+  ended: boolean;
+  session_id: string;
+  messages: Message[];
+}
+
+const IDENTITY_API = {
+  me: fetchMe,
+  login: loginWithAccount,
+  register: registerWithInvite,
+  logout: logoutSession,
+  legacyState: probeLegacyToken,
+};
+
+const TOKEN_STORAGE = {
+  readToken: loadStoredToken,
+  removeToken: clearStoredToken,
+};
+
 export function useReturnSession() {
-  const [token, setToken] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const [phase, setPhase] = useState<Phase>("enter");
+  const [identityState, setIdentityState] = useState<IdentityState | null>(null);
+  // Created once per component instance: the controller owns the identity view
+  // model, and it only notifies React from async actions.
+  const [identity] = useState(() =>
+    createIdentity(IDENTITY_API, TOKEN_STORAGE, setIdentityState),
+  );
+
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [ended, setEnded] = useState(false);
   const [sending, setSending] = useState(false);
@@ -47,21 +80,41 @@ export function useReturnSession() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const tokenRef = useRef<string | null>(null);
   const sendingRef = useRef(false);
   const pendingTextRef = useRef<string | null>(null);
   const failureKindRef = useRef<FailureKind>(null);
+  // Non-null only while the Founder is inside the pre-account browser space.
+  const legacyTokenRef = useRef<string | null>(null);
+  const chatOpenRef = useRef(false);
+  // Whose space is currently mounted; "" means nobody's.
+  const spaceKeyRef = useRef("");
 
-  const resetAuth = useCallback(() => {
-    clearStoredToken();
-    tokenRef.current = null;
+  // Life API transport: the cookie session, or the single legacy bearer path.
+  const callLife = useCallback(
+    async <T,>(method: string, path: string, body?: unknown) => {
+      const legacy = legacyTokenRef.current;
+      const r = legacy
+        ? await apiWithLegacyToken<T>(legacy, method, path)
+        : await cookieApi<T>(method, path, body);
+      // One rule for every endpoint: nobody stays inside a space the server
+      // no longer recognises, whatever the caller was about to do next.
+      if (r.status === 401) identity.invalidate();
+      return r;
+    },
+    [identity],
+  );
+
+  const resetChatView = useCallback(() => {
     pendingTextRef.current = null;
     failureKindRef.current = null;
-    setToken(null);
-    setPhase("enter");
+    legacyTokenRef.current = null;
+    chatOpenRef.current = false;
+    spaceKeyRef.current = "";
     setMessages([]);
     setEnded(false);
+    setSending(false);
     setLastFailed(false);
     setProviderError(null);
     setDeleteError(null);
@@ -71,30 +124,10 @@ export function useReturnSession() {
     setSessions([]);
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const stored = loadStoredToken();
-      tokenRef.current = stored;
-      setToken(stored);
-      setHydrated(true);
-      setPhase(stored ? "chat" : "enter");
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   const loadState = useCallback(async () => {
-    const tok = tokenRef.current;
-    if (!tok) {
-      setPhase("enter");
-      return;
-    }
-    const r = await callApi<{ returning: boolean; ended: boolean; session_id: string; messages: Message[] }>(
-      tok,
-      "GET",
-      "/api/state",
-    );
+    const r = await callLife<StatePayload>("GET", "/api/state");
     if (r.status === 401) {
-      resetAuth();
+      identity.invalidate();
       return;
     }
     if (!r.ok || !r.data) {
@@ -106,57 +139,90 @@ export function useReturnSession() {
     setLastFailed(false);
     setProviderError(null);
     setMessages(r.data.messages || []);
-    setPhase("chat");
-  }, [resetAuth]);
-
-  useEffect(() => {
-    if (hydrated && token) {
-      void loadState();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
-
-  const enter = useCallback(
-    async (code: string): Promise<{ ok: boolean; error: string | null }> => {
-      const r = await enterWithCode(code);
-      if (!r.ok || !r.data || !r.data.token) {
-        return {
-          ok: false,
-          error: "这个邀请码进不去。可能输错了，或者已经被用过。",
-        };
-      }
-      storeToken(r.data.token);
-      tokenRef.current = r.data.token;
-      setToken(r.data.token);
-      setPhase("chat");
-      const stateR = await callApi<{ returning: boolean; ended: boolean; session_id: string; messages: Message[] }>(
-        r.data.token,
-        "GET",
-        "/api/state",
-      );
-      if (stateR.status === 401) {
-        resetAuth();
-        return { ok: false, error: "进入失败了。请重新输入邀请码。" };
-      }
-      setSessionId(stateR.data?.session_id ?? null);
-      setEnded(Boolean(stateR.data?.ended));
-      setViewingOld(null);
-      setLastFailed(false);
-      setProviderError(null);
-      setMessages(stateR.data?.messages || []);
-      return { ok: true, error: null };
-    },
-    [resetAuth],
-  );
+  }, [callLife, identity]);
 
   const renderMessages = useCallback((msgs: Message[]) => {
     setMessages(msgs.map((m) => ({ ...m })));
   }, []);
 
+  // Ask the server who this is. Nothing local is consulted to decide the surface.
+  useEffect(() => {
+    void identity.bootstrap();
+  }, [identity]);
+
+  const view = identityState ? identityState.phase : "loading";
+  const chatOpen = view === "chat";
+  // Empty while at the gate: no transcript may be mounted for nobody.
+  const openSpaceKey = spaceKey(identityState);
+
+  // Open the conversation when the cookie says so; wipe it the moment it stops,
+  // and never carry one person's transcript into the next person's first render.
+  useEffect(() => {
+    if (!chatOpen) {
+      if (chatOpenRef.current) resetChatView();
+      return;
+    }
+    if (chatOpenRef.current && spaceKeyRef.current === openSpaceKey) return;
+    const switchingPerson = chatOpenRef.current;
+    if (switchingPerson) resetChatView();
+    chatOpenRef.current = true;
+    spaceKeyRef.current = openSpaceKey;
+    void loadState();
+  }, [chatOpen, openSpaceKey, loadState, resetChatView]);
+
+  const runIdentity = useCallback(
+    async (fn: () => Promise<{ ok: boolean; error: string | null }>) => {
+      if (busy) return { ok: false, error: null };
+      setBusy(true);
+      const r = await fn();
+      setBusy(false);
+      return r;
+    },
+    [busy],
+  );
+
+  const login = useCallback(
+    async (input: LoginInput) => {
+      legacyTokenRef.current = null;
+      return runIdentity(() => identity.login(input));
+    },
+    [identity, runIdentity],
+  );
+
+  const register = useCallback(
+    async (input: RegisterInput) => {
+      legacyTokenRef.current = null;
+      return runIdentity(() => identity.register(input));
+    },
+    [identity, runIdentity],
+  );
+
+  // Requires an explicit click; never called on load.
+  const openLegacySpace = useCallback(async () => {
+    return runIdentity(async () => {
+      // Install before the transition commits: opening the conversation reads
+      // this ref to decide between the cookie and the legacy bearer path.
+      const token = loadStoredToken();
+      legacyTokenRef.current = token;
+      const r = await identity.openLegacySpace();
+      if (!r.ok) legacyTokenRef.current = null;
+      return r;
+    });
+  }, [identity, runIdentity]);
+
+  // Logging out closes the session only: no end-session, no delete-all.
+  const logout = useCallback(async () => {
+    // Drop the bearer path first so the revoke always goes out on the cookie.
+    legacyTokenRef.current = null;
+    return runIdentity(async () => {
+      await identity.logout();
+      return { ok: true, error: null };
+    });
+  }, [identity, runIdentity]);
+
   const send = useCallback(
     async (text: string, isRetry: boolean): Promise<StateMessageResult> => {
-      const tok = tokenRef.current;
-      if (!tok || sendingRef.current) {
+      if (!chatOpenRef.current || sendingRef.current) {
         return { error: null };
       }
       sendingRef.current = true;
@@ -183,24 +249,24 @@ export function useReturnSession() {
         setMessages((prev) => [...prev.filter((m) => !m.__loading), loading]);
       }
 
-      const r = await callApi<{ reply: string; kind: string; messages: Message[]; error?: string }>(
-        tok,
-        "POST",
-        "/api/message",
-        { text, retry: isRetry },
-      );
+      const r = await callLife<{
+        reply: string;
+        kind: string;
+        messages: Message[];
+        error?: string;
+      }>("POST", "/api/message", { text, retry: isRetry });
 
       setMessages((prev) => prev.filter((m) => !m.__loading));
       sendingRef.current = false;
       setSending(false);
 
       if (r.status === 401) {
-        resetAuth();
+        identity.invalidate();
         return { error: null };
       }
       if (r.status === 409 && r.data && r.data.error === "nothing_to_retry") {
         const kept = pendingTextRef.current;
-        const stateR = await callApi<{ messages: Message[] }>(tok, "GET", "/api/state");
+        const stateR = await callLife<{ messages: Message[] }>("GET", "/api/state");
         if (stateR.ok && stateR.data?.messages) {
           renderMessages(stateR.data.messages);
         }
@@ -218,12 +284,7 @@ export function useReturnSession() {
       if (r.status === 503) {
         failureKindRef.current = "provider";
         const msg = (r.data as { message?: string } | null)?.message || PROVIDER_DOWN_MESSAGE;
-        const stateR = await callApi<{
-          returning: boolean;
-          ended: boolean;
-          session_id: string;
-          messages: Message[];
-        }>(tok, "GET", "/api/state");
+        const stateR = await callLife<StatePayload>("GET", "/api/state");
         if (stateR.ok && stateR.data?.messages) {
           renderMessages(stateR.data.messages);
         }
@@ -248,16 +309,14 @@ export function useReturnSession() {
       renderMessages(r.data.messages || []);
       return { error: null };
     },
-    [loadState, renderMessages, resetAuth],
+    [callLife, identity, loadState, renderMessages],
   );
 
   const retry = useCallback(async (): Promise<StateMessageResult> => {
     if (sendingRef.current) return { error: null };
     const pending = pendingTextRef.current;
     if (failureKindRef.current === "network") {
-      const tok = tokenRef.current;
-      if (!tok) return { error: null };
-      const stateR = await callApi<{ messages: Message[] }>(tok, "GET", "/api/state");
+      const stateR = await callLife<{ messages: Message[] }>("GET", "/api/state");
       const plan = decideNetworkRetry(stateR, pending);
       if (plan.mode === "wait") {
         setLastFailed(true);
@@ -273,18 +332,16 @@ export function useReturnSession() {
       return send(plan.text, false);
     }
     return send("", true);
-  }, [renderMessages, send]);
+  }, [callLife, renderMessages, send]);
 
   const startNewSession = useCallback(async (): Promise<void> => {
-    const tok = tokenRef.current;
-    if (!tok || sendingRef.current) return;
-    const r = await callApi<{ returning: boolean; session_id: string; messages: Message[] }>(
-      tok,
+    if (!chatOpenRef.current || sendingRef.current) return;
+    const r = await callLife<{ returning: boolean; session_id: string; messages: Message[] }>(
       "POST",
       "/api/new-session",
     );
     if (r.status === 401) {
-      resetAuth();
+      identity.invalidate();
       return;
     }
     if (!r.ok || !r.data) return;
@@ -296,33 +353,30 @@ export function useReturnSession() {
     setProviderError(null);
     setViewingOld(null);
     renderMessages(r.data.messages || []);
-  }, [renderMessages, resetAuth]);
+  }, [callLife, identity, renderMessages]);
 
   const loadSessions = useCallback(async (): Promise<void> => {
-    const tok = tokenRef.current;
-    if (!tok) return;
+    if (!chatOpenRef.current) return;
     setSessionsLoading(true);
-    const r = await callApi<{ sessions: SessionItem[] }>(tok, "GET", "/api/sessions");
+    const r = await callLife<{ sessions: SessionItem[] }>("GET", "/api/sessions");
     setSessionsLoading(false);
     if (r.status === 401) {
-      resetAuth();
+      identity.invalidate();
       return;
     }
     if (!r.ok || !r.data) return;
     setSessions(r.data.sessions || []);
-  }, [resetAuth]);
+  }, [callLife, identity]);
 
   const openOldSession = useCallback(
     async (id: string): Promise<void> => {
-      const tok = tokenRef.current;
-      if (!tok) return;
-      const r = await callApi<{ session_id: string; messages: Message[] }>(
-        tok,
+      if (!chatOpenRef.current) return;
+      const r = await callLife<{ session_id: string; messages: Message[] }>(
         "GET",
         "/api/sessions/" + encodeURIComponent(id),
       );
       if (r.status === 401) {
-        resetAuth();
+        identity.invalidate();
         return;
       }
       if (!r.ok || !r.data) return;
@@ -331,7 +385,7 @@ export function useReturnSession() {
       setProviderError(null);
       renderMessages(r.data.messages || []);
     },
-    [renderMessages, resetAuth],
+    [callLife, identity, renderMessages],
   );
 
   const backToCurrent = useCallback(async (): Promise<void> => {
@@ -341,13 +395,12 @@ export function useReturnSession() {
 
   const finishDay = useCallback(
     async (carry: string): Promise<boolean> => {
-      const tok = tokenRef.current;
-      if (!tok) return false;
-      const r = await callApi<{ ended: boolean }>(tok, "POST", "/api/end-session", {
+      if (!chatOpenRef.current) return false;
+      const r = await callLife<{ ended: boolean }>("POST", "/api/end-session", {
         carry_forward: carry || "",
       });
       if (r.status === 401) {
-        resetAuth();
+        identity.invalidate();
         return false;
       }
       if (!r.ok) return false;
@@ -355,27 +408,31 @@ export function useReturnSession() {
       setViewingOld(null);
       return true;
     },
-    [resetAuth],
+    [callLife, identity],
   );
 
   const deleteAll = useCallback(async (): Promise<boolean> => {
-    const tok = tokenRef.current;
-    if (!tok) return false;
+    if (!chatOpenRef.current) return false;
     setDeleteError(null);
-    const r = await callApi<{ deleted: boolean }>(tok, "POST", "/api/delete-all");
+    const r = await callLife<{ deleted: boolean }>("POST", "/api/delete-all");
     const decision = decideDeleteAll(r);
     if (decision.resetAuth) {
-      resetAuth();
+      identity.invalidate("deleted");
       return true;
     }
     setDeleteError(decision.error);
     return false;
-  }, [resetAuth]);
+  }, [callLife, identity]);
 
   return {
-    hydrated,
-    token,
-    phase,
+    view,
+    participantId: identityState?.participantId ?? "",
+    spaceKey: openSpaceKey,
+    displayName: identityState?.displayName ?? "",
+    gateError: identityState?.gateError ?? null,
+    legacyOpen: identityState?.legacyOpen ?? false,
+    legacyAvailable: identityState?.legacyAvailable ?? false,
+    busy,
     messages,
     ended,
     sending,
@@ -387,7 +444,10 @@ export function useReturnSession() {
     sessionId,
     sessions,
     sessionsLoading,
-    enter,
+    login,
+    register,
+    openLegacySpace,
+    logout,
     loadState,
     send,
     retry,

@@ -12,6 +12,7 @@ type DrawerProps = {
   onSelectSession: (id: string) => void;
   onNewSession: () => void;
   onOpenAbout: () => void;
+  onLogout: () => void;
   onGoLocal: () => void;
 };
 
@@ -41,6 +42,7 @@ export function Drawer({
   onSelectSession,
   onNewSession,
   onOpenAbout,
+  onLogout,
   onGoLocal,
 }: DrawerProps) {
   if (!open) return null;
@@ -115,6 +117,18 @@ export function Drawer({
           >
             关于这里
           </button>
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full rounded-xl px-2 py-2 text-left text-sm text-stone-500 transition hover:text-stone-200"
+            >
+              退出这个空间
+            </button>
+            <p className="px-2 pb-1 text-[12px] leading-5 text-stone-600">
+              只是离开这一次。对话和记录都留在原处。
+            </p>
+          </div>
           <button
             type="button"
             onClick={onGoLocal}

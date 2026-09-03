@@ -10,6 +10,7 @@ import {
   STORAGE_KEY,
   TRUTH_STAGES,
 } from "./defaults";
+import { createLocalSpaceScope, type LocalSpaceStorage } from "./localSpaceScope";
 import type {
   AppPreferences,
   AppState,
@@ -200,24 +201,24 @@ export const normalizeState = (raw: unknown): AppState => {
   };
 };
 
-export const loadStateFromStorage = (): AppState => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return createInitialState();
-    return normalizeState(JSON.parse(raw));
-  } catch {
-    return createInitialState();
-  }
+const browserStorage: LocalSpaceStorage = {
+  getItem: (key) => window.localStorage.getItem(key),
+  setItem: (key, value) => window.localStorage.setItem(key, value),
+  removeItem: (key) => window.localStorage.removeItem(key),
 };
 
-export const saveStateToStorage = (state: AppState): boolean => {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    return true;
-  } catch {
-    return false;
-  }
-};
+const localSpace = createLocalSpaceScope({
+  storage: browserStorage,
+  legacyKey: STORAGE_KEY,
+  normalize: normalizeState,
+  empty: createInitialState,
+});
+
+export const loadStateFromStorage = (participantId: string): AppState =>
+  localSpace.load(participantId);
+
+export const saveStateToStorage = (participantId: string, state: AppState): boolean =>
+  localSpace.save(participantId, state);
 
 export const exportStateToJson = (state: AppState): string =>
   JSON.stringify(normalizeState(state), null, 2);
@@ -225,9 +226,9 @@ export const exportStateToJson = (state: AppState): string =>
 export const importStateFromJson = (raw: string): AppState =>
   normalizeState(JSON.parse(raw));
 
-export const resetStoredState = (): AppState => {
+export const resetStoredState = (participantId: string): AppState => {
   const initial = createInitialState();
-  saveStateToStorage(initial);
+  saveStateToStorage(participantId, initial);
   return initial;
 };
 

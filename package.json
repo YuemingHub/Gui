@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types app/lib/sessionTruth.test.ts"
+    "test": "node --test --experimental-strip-types app/lib/sessionTruth.test.ts app/lib/identity.test.ts app/lib/localSpaceScope.test.ts app/lib/returnApi.test.ts"
   },
   "dependencies": {
     "motion": "^12.40.0",

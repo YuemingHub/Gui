@@ -16,33 +16,39 @@ const createTimeLabel = () =>
     minute: "2-digit",
   });
 
-export function useAppStorage() {
+export function useAppStorage(participantId: string) {
   const [state, setState] = useState<AppState>(() => createInitialState());
-  const [loaded, setLoaded] = useState(false);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("");
 
+  // State only counts as loaded for the person it was read for: a switch must
+  // never save the previous participant's writings into this one's key.
+  const loaded = participantId !== "" && loadedFor === participantId;
+
   useEffect(() => {
+    if (!participantId) return;
+
     const timer = window.setTimeout(() => {
       try {
-        setState(loadStateFromStorage());
+        setState(loadStateFromStorage(participantId));
         setStatusMessage("");
       } catch {
         setState(createInitialState());
         setStatusMessage("本地数据读取失败，已回退到默认状态。");
       } finally {
-        setLoaded(true);
+        setLoadedFor(participantId);
       }
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [participantId]);
 
   useEffect(() => {
     if (!loaded) return;
 
     const timer = window.setTimeout(() => {
-      const saved = saveStateToStorage(state);
+      const saved = saveStateToStorage(participantId, state);
       if (saved) {
         setLastSavedAt(createTimeLabel());
         setStatusMessage("");
@@ -53,7 +59,7 @@ export function useAppStorage() {
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [loaded, state]);
+  }, [loaded, participantId, state]);
 
   const dismissOnboarding = () => {
     setState((current) => ({
