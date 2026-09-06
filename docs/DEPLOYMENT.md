@@ -107,7 +107,7 @@ rsync -a --delete out/ /var/www/self-space/gui/
 | `NEXT_PUBLIC_SITE_ORIGIN` | **留空** | 对外声明的一个公开来源。留空时 `robots.txt` 对所有爬虫 `disallow: /`（账号门禁后面没有可收录的内容），页面也带 `noindex`。只有真正的公开表面才需要配它 |
 | `NEXT_PUBLIC_SHOW_LOCAL_TOOLS` | **留空** | 置 `1` 时抽屉里重新出现「本地工具（旧版草稿区）」入口。默认隐藏：新来的人不需要理解两套「自己的空间」 |
 
-⚠️ **构建期网络依赖**：`app/layout.tsx` 经 `next/font/google` 使用 Geist，`npm run build` 会在构建时向 `fonts.googleapis.com` 拉取字体。部署机若在国内网络（如阿里云 ECS）且无代理，全新目录的首次构建会直接失败。二选一：构建机可访问 Google Fonts（或保留 Next 字体缓存），或改用 `geist` npm 包 / `next/font/local` 自托管字体文件后再部署（2026-09-06 记录：本机构建已复现该失败）。
+✅ **构建期网络依赖已移除（2026-09-07）**：字体由 `geist` npm 包随依赖提供（`npm ci` 走镜像即可），`npm run build` 不再访问 Google Fonts——清空字体缓存的全新构建已验证通过。`app/lib/fontSelfHost.test.ts` 永久禁止 `next/font/google` 回流。
 
 另外：Gui 自测用 `npm run e2e` / `npm run screens`（见 `e2e/README.md`），需要 Chromium，跑在部署机之外。
 
