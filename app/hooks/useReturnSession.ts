@@ -306,6 +306,17 @@ export function useReturnSession() {
         await loadState();
         return { error: null };
       }
+      if (r.status === 400 && r.data && r.data.error === "empty_or_too_long") {
+        // 这句话一个字都没被保存。它在哪儿都不在转写里，必须原样回到输入框。
+        const kept = pendingTextRef.current;
+        pendingTextRef.current = null;
+        failureKindRef.current = null;
+        setLastFailed(false);
+        setProviderError(null);
+        if (kept) setRestoreDraft(kept);
+        setActionError(actionFailure("compose"));
+        return { error: null };
+      }
       if (r.status === 503) {
         failureKindRef.current = "provider";
         const msg = (r.data as { message?: string } | null)?.message || PROVIDER_DOWN_MESSAGE;
