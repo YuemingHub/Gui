@@ -15,6 +15,7 @@ type DrawerProps = {
   onRetryActionError: () => void;
   onClose: () => void;
   onSelectSession: (id: string) => void;
+  newDisabled?: boolean;
   onNewSession: () => void;
   onOpenAbout: () => void;
   onLogout: () => void;
@@ -51,6 +52,7 @@ export function Drawer({
   onRetryActionError,
   onClose,
   onSelectSession,
+  newDisabled,
   onNewSession,
   onOpenAbout,
   onLogout,
@@ -94,7 +96,9 @@ export function Drawer({
           <button
             type="button"
             onClick={onNewSession}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-stone-200 transition hover:border-white/16 hover:bg-white/[0.06]"
+            disabled={newDisabled}
+            title={newDisabled ? "这一句还在回应中" : undefined}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-stone-200 transition hover:border-white/16 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:bg-white/[0.03]"
           >
             新的对话
           </button>

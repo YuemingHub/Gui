@@ -160,7 +160,9 @@ function ChatSurface({
           type="button"
           onClick={() => void handleNewSession()}
           aria-label="新的对话"
-          className="rounded-full px-3 py-2 text-lg leading-none text-stone-500 transition hover:text-stone-200"
+          disabled={s.sending}
+          title={s.sending ? "这一句还在回应中" : undefined}
+          className="rounded-full px-3 py-2 text-lg leading-none text-stone-500 transition hover:text-stone-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-stone-500"
         >
           ＋
         </button>
@@ -449,6 +451,7 @@ onClick={() => {
         currentSessionId={s.sessionId}
         viewingOld={s.viewingOld}
         actionError={drawerError}
+        newDisabled={s.sending}
         onRetryActionError={() => void s.retryActionError()}
         onClose={() => setDrawerOpen(false)}
         onSelectSession={handleSelectSession}
