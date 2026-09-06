@@ -1,17 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { publicOrigin } from "./lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// 字体文件随 geist 包入库、经 next/font/local 打包：构建不访问 Google Fonts，
+// 国内构建机的全新目录不再因此失败。CSS 变量名与原 next/font/google 配置一致，
+// 渲染零变化。
 
 // What this build actually is: a private space where one person talks with
 // themselves. The old local-first seven-module surface is not what a newcomer
@@ -42,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>
