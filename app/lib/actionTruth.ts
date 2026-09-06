@@ -13,7 +13,8 @@ export type ActionArea =
   | "open"
   | "finish"
   | "logout"
-  | "delete";
+  | "delete"
+  | "compose";
 
 export interface ActionError {
   area: ActionArea;
@@ -30,6 +31,7 @@ export const ACTION_FAILURE: Record<ActionArea, string> = {
   finish: "今天还没有真正结束。上面那两个按钮再按一次就行。",
   logout: "没有退出成功。这台浏览器还停在你的空间里，请再试一次。",
   delete: "没有删除成功。数据还在服务器上——我们没有偷偷替你删。",
+  compose: "这句话超过了 4000 字，还没有被保存。原文已经放回输入框，删短一点再说。",
 };
 
 // Some failures happen where their own controls still are (finishing the day
@@ -43,6 +45,7 @@ const RETRYABLE: Record<ActionArea, boolean> = {
   finish: false,
   logout: true,
   delete: true,
+  compose: false,
 };
 
 export const NETWORK_FAILURE_LINE = "没有连上服务器。检查网络后再试一次。";

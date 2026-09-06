@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  api as cookieApi,  apiWithLegacyToken,
+  api as cookieApi,
+  apiWithLegacyToken,
   clearStoredToken,
   fetchMe,
   loadStoredToken,
@@ -21,14 +22,19 @@ import {
   spaceKey,
   type IdentityState,
 } from "@/app/lib/identity";
-import { decideDeleteAll, decideNetworkRetry } from "@/app/lib/sessionTruth";
+import {
+  backendHasAnsweredPendingTurn,
+  decideDeleteAll,
+  decideNetworkRetry,
+} from "@/app/lib/sessionTruth";
 import { actionFailure, type ActionError } from "@/app/lib/actionTruth";
 
 interface StateMessageResult {
   error: string | null;
 }
 
-const GENERIC_ERROR = "这里出了点问题。你刚才说的话都在，没有丢。";
+const GENERIC_ERROR =
+  "这里出了点问题。你说过的话都在，没有丢；回应有时会晚一点才完成，点「再试一次」就能看到最新。";
 const NETWORK_ERROR = "网络断了一下。请再试一次。";
 
 const LOADING_MESSAGE: Message = {
@@ -277,10 +283,17 @@ export function useReturnSession() {
         return { error: null };
       }
       if (r.status === 409 && r.data && r.data.error === "nothing_to_retry") {
-        const kept = pendingTextRef.current;
+        let kept = pendingTextRef.current;
         const stateR = await callLife<{ messages: Message[] }>("GET", "/api/state");
         if (stateR.ok && stateR.data?.messages) {
           renderMessages(stateR.data.messages);
+          // 迟到的回复：这句话已经入档并且回应就在上面。把它再塞回输入框等于
+          // 谎报"没发出去"，还会诱使同一句话说两遍。
+          if (kept && backendHasAnsweredPendingTurn(stateR.data.messages, kept)) {
+            pendingTextRef.current = null;
+            failureKindRef.current = null;
+            kept = null;
+          }
         }
         if (kept) {
           setRestoreDraft(kept);
@@ -291,6 +304,17 @@ export function useReturnSession() {
       }
       if (r.status === 409 && r.data && r.data.error === "no_active_session") {
         await loadState();
+        return { error: null };
+      }
+      if (r.status === 400 && r.data && r.data.error === "empty_or_too_long") {
+        // 这句话一个字都没被保存。它在哪儿都不在转写里，必须原样回到输入框。
+        const kept = pendingTextRef.current;
+        pendingTextRef.current = null;
+        failureKindRef.current = null;
+        setLastFailed(false);
+        setProviderError(null);
+        if (kept) setRestoreDraft(kept);
+        setActionError(actionFailure("compose"));
         return { error: null };
       }
       if (r.status === 503) {
@@ -334,6 +358,17 @@ export function useReturnSession() {
         setLastFailed(true);
         setProviderError(NETWORK_ERROR);
         return { error: NETWORK_ERROR };
+      }
+      if (plan.mode === "recovered") {
+        // 话早就送到了，回应也在：把事实摆出来，而不是把同一句话再说一遍。
+        if (stateR.ok && stateR.data?.messages) {
+          renderMessages(stateR.data.messages);
+        }
+        pendingTextRef.current = null;
+        failureKindRef.current = null;
+        setLastFailed(false);
+        setProviderError(null);
+        return { error: null };
       }
       if (plan.mode === "retry") {
         if (stateR.ok && stateR.data?.messages) {

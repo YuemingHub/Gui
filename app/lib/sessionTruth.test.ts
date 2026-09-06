@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   DELETE_FAILED_MESSAGE,
+  backendHasAnsweredPendingTurn,
   backendHasPendingTurn,
   decideDeleteAll,
   decideNetworkRetry,
@@ -125,4 +126,70 @@ test("network retry waits when delivery state cannot be read", () => {
     decideNetworkRetry({ ok: true, networkError: false, data: { messages: [] } }, null),
     { mode: "wait" },
   );
+});
+
+test("answered pending turn: text already stored and replied must not go back to the draft", () => {
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [
+        { role: "user", content: "原文" },
+        { role: "assistant", content: "迟到但已完成的回应" },
+      ],
+      "原文",
+    ),
+    true,
+  );
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [{ role: "user", content: "原文" }],
+      "原文",
+    ),
+    false,
+  );
+  assert.equal(backendHasAnsweredPendingTurn([{ role: "assistant", content: "hi" }], "原文"), false);
+  assert.equal(backendHasAnsweredPendingTurn(null, "原文"), false);
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [
+        { role: "user", content: "别的话" },
+        { role: "assistant", content: "回复" },
+      ],
+      "原文",
+    ),
+    false,
+  );
+});
+
+test("network retry recovers instead of resending when the turn already completed", () => {
+  const d = decideNetworkRetry(
+    {
+      ok: true,
+      networkError: false,
+      data: {
+        messages: [
+          { role: "user", content: "原文" },
+          { role: "assistant", content: "迟到但完整的回应" },
+        ],
+      },
+    },
+    "原文",
+  );
+  assert.deepEqual(d, { mode: "recovered" });
+});
+
+test("network retry still resends only words the backend never stored", () => {
+  const d = decideNetworkRetry(
+    {
+      ok: true,
+      networkError: false,
+      data: {
+        messages: [
+          { role: "user", content: "上一句" },
+          { role: "assistant", content: "回复" },
+        ],
+      },
+    },
+    "没发出去的新一句",
+  );
+  assert.deepEqual(d, { mode: "resend", text: "没发出去的新一句" });
 });

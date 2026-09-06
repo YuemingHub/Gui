@@ -108,7 +108,9 @@ function ChatSurface({
 
   const handleSelectSession = async (id: string) => {
     setDrawerOpen(false);
-    if (id === s.sessionId) {
+    // 刚结束的会话仍是 sessionId，但点它的人要的是回看，不是"回到当前"——
+    // 那条路会经 loadState 凭空开出一个新会话。
+    if (id === s.sessionId && !s.ended) {
       await s.backToCurrent();
       return;
     }
@@ -158,7 +160,9 @@ function ChatSurface({
           type="button"
           onClick={() => void handleNewSession()}
           aria-label="新的对话"
-          className="rounded-full px-3 py-2 text-lg leading-none text-stone-500 transition hover:text-stone-200"
+          disabled={s.sending}
+          title={s.sending ? "这一句还在回应中" : undefined}
+          className="rounded-full px-3 py-2 text-lg leading-none text-stone-500 transition hover:text-stone-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-stone-500"
         >
           ＋
         </button>
@@ -357,7 +361,7 @@ onClick={() => {
                   setCarryInput("");
                   setEndLayerOpen(true);
                 }}
-                className="text-[12px] tracking-wide text-stone-600 transition hover:text-stone-400"
+                className="min-h-11 px-3 text-[12px] tracking-wide text-stone-600 transition hover:text-stone-400"
               >
                 今天先到这里
               </button>
@@ -447,6 +451,7 @@ onClick={() => {
         currentSessionId={s.sessionId}
         viewingOld={s.viewingOld}
         actionError={drawerError}
+        newDisabled={s.sending}
         onRetryActionError={() => void s.retryActionError()}
         onClose={() => setDrawerOpen(false)}
         onSelectSession={handleSelectSession}
