@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { LocalSpace } from "@/app/LocalSpace";
@@ -61,24 +61,26 @@ function ChatSurface({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [endLayerOpen, setEndLayerOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'warning' | 'final'>('idle');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [carryInput, setCarryInput] = useState("");
   // A panel that opens below the fold is a silent failure of another kind.
   const endLayerRef = useRef<HTMLDivElement | null>(null);
-  const deleteBoxRef = useRef<HTMLDivElement | null>(null);
-
-  // The shell is as tall as what the screen actually shows, so a phone keyboard
+    // The shell is as tall as what the screen actually shows, so a phone keyboard
   // lifts the composer instead of burying it.
   useVisualViewportHeight();
 
   const browsingOld = Boolean(s.viewingOld);
 
   useEffect(() => {
-    if (!endLayerOpen && !deleteConfirm) return;
-    const el = deleteConfirm ? deleteBoxRef.current : endLayerRef.current;
+    if (!endLayerOpen && deleteStep === 'idle') return;
+    const el = deleteStep !== 'idle' ? endLayerRef.current : endLayerRef.current; // always about panel now
     // "nearest" keeps it on screen without jumping the transcript around.
     el?.scrollIntoView({ block: "nearest" });
-  }, [endLayerOpen, deleteConfirm]);
+  }, [endLayerOpen, deleteStep]);
 
   // Escape always leads back to the conversation, from any of the three panels.
   useEffect(() => {
@@ -87,7 +89,7 @@ function ChatSurface({
       if (e.key !== "Escape") return;
       setEndLayerOpen(false);
       setAboutOpen(false);
-      setDeleteConfirm(false);
+      setDeleteStep('idle');
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -113,6 +115,18 @@ function ChatSurface({
     await s.openOldSession(id);
   };
 
+  const handleClaim = async (login_id: string, password: string, display_name?: string) => {
+    setClaimBusy(true);
+    setClaimError(null);
+    const r = await s.claim({ login_id, password, display_name });
+    setClaimBusy(false);
+    if (r.ok) {
+      setClaimOpen(false);
+    } else {
+      setClaimError(r.error);
+    }
+  };
+
   const handleFinishDay = async (carry: string) => {
     const ok = await s.finishDay(carry);
     if (ok) {
@@ -124,7 +138,7 @@ function ChatSurface({
   const closeBottomPanel = () => {
     setAboutOpen(false);
     setEndLayerOpen(false);
-    setDeleteConfirm(false);
+    setDeleteStep('idle');
   };
 
   // "没能载入过去的对话列表" belongs in the drawer, next to the empty list it
@@ -158,9 +172,18 @@ function ChatSurface({
       </header>
 
       {s.legacyOpen ? (
-        <p className="border-b border-amber-300/20 bg-[rgba(200,173,134,0.07)] px-4 py-2.5 text-center text-[13px] leading-6 text-amber-200/80">
-          这台浏览器还在用旧的进入方式。请创建账号，以后凭账号回到自己的空间。
-        </p>
+        <div className="border-b border-amber-300/20 bg-[rgba(200,173,134,0.07)] px-4 py-2.5 text-center">
+          <p className="text-[13px] leading-6 text-amber-200/80">
+            这台浏览器还在用旧的进入方式。
+            <button
+              type="button"
+              onClick={() => { setClaimOpen(true); setClaimError(null); }}
+              className="ml-2 underline-offset-2 hover:underline text-amber-200 transition hover:text-amber-100"
+            >
+              给这个空间设一个账号密码
+            </button>
+          </p>
+        </div>
       ) : null}
 
       <MessageList messages={s.messages} />
@@ -196,8 +219,10 @@ function ChatSurface({
               <p className="text-sm text-stone-300">关于这里</p>
               <button
                 type="button"
-                onClick={closeBottomPanel}
-                className="rounded-full px-3 py-1.5 text-xs text-stone-500 transition hover:text-stone-300"
+onClick={() => {
+                  setAboutOpen(false);
+                  setDeleteStep('idle');
+                }}                className="rounded-full px-3 py-1.5 text-xs text-stone-500 transition hover:text-stone-300"
               >
                 返回对话
               </button>
@@ -211,40 +236,62 @@ function ChatSurface({
             </p>
             <p className="mt-5 text-sm text-stone-300">数据与隐私</p>
             <div className="mt-2">
-              {deleteConfirm ? (
-                <div
-                  ref={deleteBoxRef}
-                  className="rounded-2xl border border-red-400/25 bg-[rgba(180,60,50,0.08)] p-4"
-                >
-                  <p className="text-sm leading-6 text-stone-200">
-                    真的删除全部数据？对话、记忆、记录会一起消失，无法找回。
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void s.deleteAll()}
-                      className="rounded-full border border-red-400/40 bg-[rgba(180,60,50,0.18)] px-4 py-2 text-sm text-red-200"
-                    >
-                      全部删除
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteConfirm(false)}
-                      className="rounded-full border border-white/10 px-4 py-2 text-sm text-stone-400"
-                    >
-                      先不删
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
+{deleteStep === 'idle' ? (                <button
                   type="button"
-                  onClick={() => setDeleteConfirm(true)}
+                  onClick={() => { setDeleteStep('warning'); }}
                   className="text-[13px] text-stone-600 underline-offset-4 transition hover:text-red-300/80 hover:underline"
                 >
                   删除我的全部数据
                 </button>
+              ) : deleteStep === 'warning' ? (
+                <div className="rounded-2xl border border-red-400/25 bg-[rgba(180,60,50,0.08)] p-4">
+                  <p className="text-sm leading-6 text-stone-200">
+                    这会永久删除你的空间，包括这里保存的对话、记忆和与你这个空间相关的数据。删除后无法恢复。
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteStep('idle')}
+                      className="rounded-full border border-white/10 px-4 py-2 text-sm text-stone-400"
+                    >
+                      先不删
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteStep('final')}
+                      className="rounded-full border border-red-400/40 bg-[rgba(180,60,50,0.18)] px-4 py-2 text-sm text-red-200"
+                    >
+                      继续删除
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-red-400/40 bg-[rgba(180,60,50,0.14)] p-4">
+                  <p className="text-sm font-medium leading-6 text-red-200">确认永久删除这个空间？</p>
+                  <p className="mt-2 text-[13px] leading-6 text-stone-400">包括对话、记忆、记录。无法恢复。</p>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteStep('warning')}
+                      className="rounded-full border border-white/10 px-4 py-2 text-sm text-stone-400"
+                    >
+                      返回
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => { if (deleteBusy) return; setDeleteBusy(true); setDeleteStep('idle'); const ok = await s.deleteAll(); if (!ok) setDeleteBusy(false); }} disabled={deleteBusy}
+                      className="rounded-full border border-red-400/60 bg-[rgba(180,60,50,0.28)] px-4 py-2 text-sm font-medium text-red-100"
+                    >
+                      确认删除
+                    </button>
+                  </div>
+                </div>
               )}
+              {deleteBusy ? (
+                <p className="mt-3 text-sm leading-6 text-stone-400">正在删除…</p>
+              ) : s.deleteError ? (
+                <p className="mt-3 text-sm leading-6 text-amber-200/80">{s.deleteError}</p>
+              ) : null}
             </div>
           </div>
         ) : endLayerOpen ? (
@@ -331,6 +378,63 @@ function ChatSurface({
         )}
       </div>
 
+      {claimOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              await handleClaim(
+                String(fd.get('claim_login') ?? '').trim(),
+                String(fd.get('claim_password') ?? ''),
+                String(fd.get('claim_name') ?? '').trim() || undefined,
+              );
+            }}
+            className="mx-4 w-full max-w-sm rounded-3xl border border-white/10 bg-[#0b0e12] p-6 shadow-2xl"
+          >
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-300/70">认领这个空间</p>
+            <h3 className="mt-3 text-lg font-medium text-stone-100">设一个账号和密码</h3>
+            <p className="mt-2 text-[13px] leading-6 text-stone-500">
+              给现在这个空间设一个账号和密码。以后换设备，也能回来这里。
+            </p>
+            <div className="mt-5 flex flex-col gap-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[13px] tracking-wide text-stone-500">账号</span>
+                <input name="claim_login" type="text" autoComplete="username" autoCapitalize="off"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-base text-stone-100 placeholder:text-stone-600 focus:border-white/20"
+                  placeholder="3-32 个小写字母、数字、下划线" required disabled={claimBusy} />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[13px] tracking-wide text-stone-500">密码</span>
+                <input name="claim_password" type="password" autoComplete="new-password"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-base text-stone-100 placeholder:text-stone-600 focus:border-white/20"
+                  placeholder="至少 10 个字符" required disabled={claimBusy} />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[13px] tracking-wide text-stone-500">称呼（可留空）</span>
+                <input name="claim_name" type="text" autoComplete="nickname"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-base text-stone-100 placeholder:text-stone-600 focus:border-white/20"
+                  placeholder="这里想怎么叫你" disabled={claimBusy} />
+              </label>
+            </div>
+            {claimError ? (
+              <p className="mt-3 text-sm leading-6 text-amber-300/80">{claimError}</p>
+            ) : null}
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => { setClaimOpen(false); setClaimError(null); }}
+                disabled={claimBusy}
+                className="rounded-full border border-white/10 px-5 py-3 text-sm text-stone-400 transition hover:text-stone-200 disabled:opacity-40">
+                取消
+              </button>
+              <button type="submit" disabled={claimBusy}
+                className="flex-1 rounded-full border border-white/10 bg-[rgba(200,173,134,0.16)] px-5 py-3 text-sm text-stone-100 transition hover:bg-[rgba(200,173,134,0.24)] disabled:opacity-40">
+                {claimBusy ? '正在保存…' : '绑定账号'}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
       <Drawer
         open={drawerOpen}
         sessions={s.sessions}
@@ -345,7 +449,7 @@ function ChatSurface({
         onOpenAbout={() => {
           setDrawerOpen(false);
           setAboutOpen(true);
-          setDeleteConfirm(false);
+          setDeleteStep('idle');
         }}
         onLogout={() => {
           setDrawerOpen(false);
