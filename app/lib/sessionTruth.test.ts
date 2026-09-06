@@ -159,3 +159,37 @@ test("answered pending turn: text already stored and replied must not go back to
     false,
   );
 });
+
+test("network retry recovers instead of resending when the turn already completed", () => {
+  const d = decideNetworkRetry(
+    {
+      ok: true,
+      networkError: false,
+      data: {
+        messages: [
+          { role: "user", content: "原文" },
+          { role: "assistant", content: "迟到但完整的回应" },
+        ],
+      },
+    },
+    "原文",
+  );
+  assert.deepEqual(d, { mode: "recovered" });
+});
+
+test("network retry still resends only words the backend never stored", () => {
+  const d = decideNetworkRetry(
+    {
+      ok: true,
+      networkError: false,
+      data: {
+        messages: [
+          { role: "user", content: "上一句" },
+          { role: "assistant", content: "回复" },
+        ],
+      },
+    },
+    "没发出去的新一句",
+  );
+  assert.deepEqual(d, { mode: "resend", text: "没发出去的新一句" });
+});

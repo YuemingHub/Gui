@@ -348,6 +348,17 @@ export function useReturnSession() {
         setProviderError(NETWORK_ERROR);
         return { error: NETWORK_ERROR };
       }
+      if (plan.mode === "recovered") {
+        // 话早就送到了，回应也在：把事实摆出来，而不是把同一句话再说一遍。
+        if (stateR.ok && stateR.data?.messages) {
+          renderMessages(stateR.data.messages);
+        }
+        pendingTextRef.current = null;
+        failureKindRef.current = null;
+        setLastFailed(false);
+        setProviderError(null);
+        return { error: null };
+      }
       if (plan.mode === "retry") {
         if (stateR.ok && stateR.data?.messages) {
           renderMessages(stateR.data.messages);

@@ -108,7 +108,9 @@ function ChatSurface({
 
   const handleSelectSession = async (id: string) => {
     setDrawerOpen(false);
-    if (id === s.sessionId) {
+    // 刚结束的会话仍是 sessionId，但点它的人要的是回看，不是"回到当前"——
+    // 那条路会经 loadState 凭空开出一个新会话。
+    if (id === s.sessionId && !s.ended) {
       await s.backToCurrent();
       return;
     }

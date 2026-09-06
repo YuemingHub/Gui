@@ -41,13 +41,17 @@ export function backendHasPendingTurn(
 export function decideNetworkRetry(
   stateResult: StateApiResult | null,
   pendingText: string | null,
-): { mode: "retry" } | { mode: "resend"; text: string } | { mode: "wait" } {
+): { mode: "retry" } | { mode: "recovered" } | { mode: "resend"; text: string } | { mode: "wait" } {
   if (!pendingText) return { mode: "wait" };
   if (!stateResult || stateResult.networkError || !stateResult.ok) {
     return { mode: "wait" };
   }
   if (backendHasPendingTurn(stateResult.data?.messages, pendingText)) {
     return { mode: "retry" };
+  }
+  // 网络断在半路、但话已入档且回应就在转写里：resend 会把同一句话说两遍。
+  if (backendHasAnsweredPendingTurn(stateResult.data?.messages, pendingText)) {
+    return { mode: "recovered" };
   }
   return { mode: "resend", text: pendingText };
 }
