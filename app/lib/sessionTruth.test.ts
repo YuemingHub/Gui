@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   DELETE_FAILED_MESSAGE,
+  backendHasAnsweredPendingTurn,
   backendHasPendingTurn,
   decideDeleteAll,
   decideNetworkRetry,
@@ -124,5 +125,37 @@ test("network retry waits when delivery state cannot be read", () => {
   assert.deepEqual(
     decideNetworkRetry({ ok: true, networkError: false, data: { messages: [] } }, null),
     { mode: "wait" },
+  );
+});
+
+test("answered pending turn: text already stored and replied must not go back to the draft", () => {
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [
+        { role: "user", content: "原文" },
+        { role: "assistant", content: "迟到但已完成的回应" },
+      ],
+      "原文",
+    ),
+    true,
+  );
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [{ role: "user", content: "原文" }],
+      "原文",
+    ),
+    false,
+  );
+  assert.equal(backendHasAnsweredPendingTurn([{ role: "assistant", content: "hi" }], "原文"), false);
+  assert.equal(backendHasAnsweredPendingTurn(null, "原文"), false);
+  assert.equal(
+    backendHasAnsweredPendingTurn(
+      [
+        { role: "user", content: "别的话" },
+        { role: "assistant", content: "回复" },
+      ],
+      "原文",
+    ),
+    false,
   );
 });

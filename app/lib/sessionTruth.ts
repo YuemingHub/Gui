@@ -51,3 +51,21 @@ export function decideNetworkRetry(
   }
   return { mode: "resend", text: pendingText };
 }
+
+export function backendHasAnsweredPendingTurn(
+  messages: Array<{ role?: string; content?: string }> | null | undefined,
+  pendingText: string | null,
+): boolean {
+  if (!pendingText) return false;
+  const list = messages || [];
+  let lastUserIndex = -1;
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (list[i]?.role === "user") {
+      lastUserIndex = i;
+      break;
+    }
+  }
+  if (lastUserIndex === -1) return false;
+  if (list[lastUserIndex].content !== pendingText) return false;
+  return list.slice(lastUserIndex + 1).some((m) => m.role === "assistant");
+}

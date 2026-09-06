@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  api as cookieApi,  apiWithLegacyToken,
+  api as cookieApi,
+  apiWithLegacyToken,
   clearStoredToken,
   fetchMe,
   loadStoredToken,
@@ -21,14 +22,19 @@ import {
   spaceKey,
   type IdentityState,
 } from "@/app/lib/identity";
-import { decideDeleteAll, decideNetworkRetry } from "@/app/lib/sessionTruth";
+import {
+  backendHasAnsweredPendingTurn,
+  decideDeleteAll,
+  decideNetworkRetry,
+} from "@/app/lib/sessionTruth";
 import { actionFailure, type ActionError } from "@/app/lib/actionTruth";
 
 interface StateMessageResult {
   error: string | null;
 }
 
-const GENERIC_ERROR = "这里出了点问题。你刚才说的话都在，没有丢。";
+const GENERIC_ERROR =
+  "这里出了点问题。你说过的话都在，没有丢；回应有时会晚一点才完成，点「再试一次」就能看到最新。";
 const NETWORK_ERROR = "网络断了一下。请再试一次。";
 
 const LOADING_MESSAGE: Message = {
@@ -277,10 +283,17 @@ export function useReturnSession() {
         return { error: null };
       }
       if (r.status === 409 && r.data && r.data.error === "nothing_to_retry") {
-        const kept = pendingTextRef.current;
+        let kept = pendingTextRef.current;
         const stateR = await callLife<{ messages: Message[] }>("GET", "/api/state");
         if (stateR.ok && stateR.data?.messages) {
           renderMessages(stateR.data.messages);
+          // 迟到的回复：这句话已经入档并且回应就在上面。把它再塞回输入框等于
+          // 谎报"没发出去"，还会诱使同一句话说两遍。
+          if (kept && backendHasAnsweredPendingTurn(stateR.data.messages, kept)) {
+            pendingTextRef.current = null;
+            failureKindRef.current = null;
+            kept = null;
+          }
         }
         if (kept) {
           setRestoreDraft(kept);
