@@ -134,13 +134,6 @@ function ChatSurface({
       setCarryInput("");
     }
   };
-
-  const closeBottomPanel = () => {
-    setAboutOpen(false);
-    setEndLayerOpen(false);
-    setDeleteStep('idle');
-  };
-
   // "没能载入过去的对话列表" belongs in the drawer, next to the empty list it
   // failed to fill. Everything else shows here.
   const drawerError = s.actionError?.area === "sessions" ? s.actionError : null;
@@ -289,8 +282,8 @@ onClick={() => {
               )}
               {deleteBusy ? (
                 <p className="mt-3 text-sm leading-6 text-stone-400">正在删除…</p>
-              ) : s.deleteError ? (
-                <p className="mt-3 text-sm leading-6 text-amber-200/80">{s.deleteError}</p>
+              ) : s.actionError?.area === 'delete' ? (
+                <p className="mt-3 text-sm leading-6 text-amber-200/80">{s.actionError.message}</p>
               ) : null}
             </div>
           </div>
@@ -384,9 +377,15 @@ onClick={() => {
             onSubmit={async (e) => {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
+              const pw: string = String(fd.get('claim_password') ?? '');
+              const pw2: string = String(fd.get('claim_password2') ?? '');
+              if (pw !== pw2) {
+                setClaimError('两次输入的密码不一样。请再试一次。');
+                return;
+              }
               await handleClaim(
                 String(fd.get('claim_login') ?? '').trim(),
-                String(fd.get('claim_password') ?? ''),
+                pw,
                 String(fd.get('claim_name') ?? '').trim() || undefined,
               );
             }}
@@ -409,6 +408,12 @@ onClick={() => {
                 <input name="claim_password" type="password" autoComplete="new-password"
                   className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-base text-stone-100 placeholder:text-stone-600 focus:border-white/20"
                   placeholder="至少 10 个字符" required disabled={claimBusy} />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[13px] tracking-wide text-stone-500">再输一次密码</span>
+                <input name="claim_password2" type="password" autoComplete="new-password"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-base text-stone-100 placeholder:text-stone-600 focus:border-white/20"
+                  placeholder="两次要一样" required disabled={claimBusy} />
               </label>
               <label className="flex flex-col gap-1.5">
                 <span className="text-[13px] tracking-wide text-stone-500">称呼（可留空）</span>
