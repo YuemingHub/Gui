@@ -44,7 +44,9 @@ export function Composer({ disabled, restoreText, onSend }: ComposerProps) {
         ref={inputRef}
         value={value}
         rows={1}
+        aria-label="要说的话"
         placeholder="说点什么"
+        enterKeyHint="send"
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {

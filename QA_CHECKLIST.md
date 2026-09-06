@@ -1,5 +1,7 @@
 # QA_CHECKLIST
 
+> 2026-09 注：正式表面现在是对话空间。本清单第一部分（一～八）针对仍然保留的本地七模块表面（默认隐藏，`NEXT_PUBLIC_SHOW_LOCAL_TOOLS=1` 时从抽屉进入）；对话表面的验证以 `e2e/` 的真实浏览器旅程为准（`npm run e2e` / `npm run screens`，见 `e2e/README.md`）。
+
 ## 目标
 
 这份清单用于验证当前前端 MVP 是否满足最基本的稳定性要求：
@@ -11,6 +13,7 @@
 - 导入导出可用
 - 重置可用
 - lint / build 通过
+- 对话表面：`npm test`、`npm run e2e`、`npm run screens` 全绿（真实浏览器）
 
 ---
 

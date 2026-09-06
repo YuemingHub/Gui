@@ -64,6 +64,9 @@ export function MessageList({ messages }: { messages: DisplayMessage[] }) {
     <div
       ref={scrollerRef}
       onScroll={onScroll}
+      role="log"
+      aria-live="polite"
+      aria-label="你和自己的对话"
       className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 sm:px-6"
       id="messages-scroll"
     >

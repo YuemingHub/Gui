@@ -1,5 +1,7 @@
 # ARCHITECTURE
 
+> 2026-09 注：对话表面（`app/page.tsx` → `components/conversation/`）不使用本文描述的本地存储链路；它走 `app/lib/returnApi.ts` + `app/hooks/useReturnSession.ts`，数据真相在 Return 后端。本文描述的是仍然保留的本地七模块表面。
+
 ## 目标
 
 这个项目的技术目标很明确：

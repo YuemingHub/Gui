@@ -1,0 +1,229 @@
+{
+  "builtAt": "2026-09-06T06:24:03.908Z",
+  "viewports": [
+    {
+      "viewport": "375x812-phone",
+      "checks": [
+        {
+          "name": "首屏不横着溢出",
+          "pass": true,
+          "detail": "375x812"
+        },
+        {
+          "name": "输入框完整可见",
+          "pass": true,
+          "detail": "composer bottom 798 / 812"
+        },
+        {
+          "name": "等待回应时输入框仍在原位",
+          "pass": true,
+          "detail": "可视 812px"
+        },
+        {
+          "name": "长回应之后不横溢、仍可继续说",
+          "pass": true,
+          "detail": "composer bottom 798"
+        },
+        {
+          "name": "安全提示卡不破版",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "抽屉在窄屏不超过屏宽",
+          "pass": true,
+          "detail": "315x812"
+        },
+        {
+          "name": "只读历史可以回到当前",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "结束今天的面板里两个按钮都在",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "删除确认在屏内且可以取消",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "可视区变矮时输入框不被埋住",
+          "pass": true,
+          "detail": "可视高 812 → 512；--vvh 512px"
+        }
+      ],
+      "keyboard": "viewport-shrink proxy"
+    },
+    {
+      "viewport": "390x844-phone",
+      "checks": [
+        {
+          "name": "首屏不横着溢出",
+          "pass": true,
+          "detail": "390x844"
+        },
+        {
+          "name": "输入框完整可见",
+          "pass": true,
+          "detail": "composer bottom 830 / 844"
+        },
+        {
+          "name": "等待回应时输入框仍在原位",
+          "pass": true,
+          "detail": "可视 844px"
+        },
+        {
+          "name": "长回应之后不横溢、仍可继续说",
+          "pass": true,
+          "detail": "composer bottom 830"
+        },
+        {
+          "name": "安全提示卡不破版",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "抽屉在窄屏不超过屏宽",
+          "pass": true,
+          "detail": "320x844"
+        },
+        {
+          "name": "只读历史可以回到当前",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "结束今天的面板里两个按钮都在",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "删除确认在屏内且可以取消",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "可视区变矮时输入框不被埋住",
+          "pass": true,
+          "detail": "可视高 844 → 544；--vvh 544px"
+        }
+      ],
+      "keyboard": "viewport-shrink proxy"
+    },
+    {
+      "viewport": "768x1024-tablet",
+      "checks": [
+        {
+          "name": "首屏不横着溢出",
+          "pass": true,
+          "detail": "768x1024"
+        },
+        {
+          "name": "输入框完整可见",
+          "pass": true,
+          "detail": "composer bottom 1010 / 1024"
+        },
+        {
+          "name": "等待回应时输入框仍在原位",
+          "pass": true,
+          "detail": "可视 1024px"
+        },
+        {
+          "name": "长回应之后不横溢、仍可继续说",
+          "pass": true,
+          "detail": "composer bottom 1010"
+        },
+        {
+          "name": "安全提示卡不破版",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "抽屉在窄屏不超过屏宽",
+          "pass": true,
+          "detail": "320x1024"
+        },
+        {
+          "name": "只读历史可以回到当前",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "结束今天的面板里两个按钮都在",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "删除确认在屏内且可以取消",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "可视区变矮时输入框不被埋住",
+          "pass": true,
+          "detail": "可视高 1024 → 724；--vvh 724px"
+        }
+      ],
+      "keyboard": "viewport-shrink proxy"
+    },
+    {
+      "viewport": "1440x900-desktop",
+      "checks": [
+        {
+          "name": "首屏不横着溢出",
+          "pass": true,
+          "detail": "1440x900"
+        },
+        {
+          "name": "输入框完整可见",
+          "pass": true,
+          "detail": "composer bottom 886 / 900"
+        },
+        {
+          "name": "等待回应时输入框仍在原位",
+          "pass": true,
+          "detail": "可视 900px"
+        },
+        {
+          "name": "长回应之后不横溢、仍可继续说",
+          "pass": true,
+          "detail": "composer bottom 886"
+        },
+        {
+          "name": "安全提示卡不破版",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "抽屉在窄屏不超过屏宽",
+          "pass": true,
+          "detail": "320x900"
+        },
+        {
+          "name": "只读历史可以回到当前",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "结束今天的面板里两个按钮都在",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "删除确认在屏内且可以取消",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "name": "可视区变矮时输入框不被埋住",
+          "pass": true,
+          "detail": "可视高 900 → 600；--vvh 600px"
+        }
+      ],
+      "keyboard": "viewport-shrink proxy"
+    }
+  ]
+}
