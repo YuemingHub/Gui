@@ -386,11 +386,19 @@ async function main() {
 
     await page.getByRole("button", { name: "过去的对话" }).click();
     await page.getByRole("button", { name: "关于这里" }).click();
+    // 两步确认：warning（先不删/继续删除）→ final（返回/确认删除）。
     await page.getByRole("button", { name: "删除我的全部数据" }).click();
     await shoot(page, "09-删除确认");
+    await page.getByRole("button", { name: "先不删" }).click();
+    ok(
+      await page.getByRole("button", { name: "删除我的全部数据" }).isVisible(),
+      "第一步取消后应全身而退，按钮回到眼前",
+    );
+    await page.getByRole("button", { name: "删除我的全部数据" }).click();
+    await page.getByRole("button", { name: "继续删除" }).click();
 
     harness.failOnce("/api/delete-all", 500);
-    await page.getByRole("button", { name: "全部删除" }).click();
+    await page.getByRole("button", { name: "确认删除" }).click();
     await page.locator("[data-action-area]").waitFor({ timeout: 4000 });
     ok(/没有删除成功/.test(await plain(page)), "删除失败却没有说法");
     ok((await plain(page)).includes(line), "服务器没删，界面却把话藏起来了");
@@ -401,7 +409,10 @@ async function main() {
     await shoot(page, "09b-删除失败说了话");
 
     await page.getByRole("button", { name: "知道了" }).click();
-    await page.getByRole("button", { name: "全部删除" }).click();
+    // 失败之后再来一遍，这一次让它真的删掉。
+    await page.getByRole("button", { name: "删除我的全部数据" }).click();
+    await page.getByRole("button", { name: "继续删除" }).click();
+    await page.getByRole("button", { name: "确认删除" }).click();
     await page.getByRole("heading", { name: /你是谁/ }).waitFor({ timeout: 5000 });
     ok(
       participant("aming").sessions.every((s) => s.messages.length === 0),
