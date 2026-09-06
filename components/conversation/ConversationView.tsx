@@ -50,6 +50,7 @@ function ChatSurface({
   const [endLayerOpen, setEndLayerOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [deleteStep, setDeleteStep] = useState<'idle' | 'warning' | 'final'>('idle');
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimBusy, setClaimBusy] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -216,7 +217,7 @@ function ChatSurface({
                     </button>
                     <button
                       type="button"
-                      onClick={async () => { setDeleteStep('idle'); await s.deleteAll(); }}
+                      onClick={async () => { if (deleteBusy) return; setDeleteBusy(true); setDeleteStep('idle'); const ok = await s.deleteAll(); if (!ok) setDeleteBusy(false); }} disabled={deleteBusy}
                       className="rounded-full border border-red-400/60 bg-[rgba(180,60,50,0.28)] px-4 py-2 text-sm font-medium text-red-100"
                     >
                       确认删除
@@ -224,7 +225,9 @@ function ChatSurface({
                   </div>
                 </div>
               )}
-              {s.deleteError ? (
+              {deleteBusy ? (
+                <p className="mt-3 text-sm leading-6 text-stone-400">正在删除…</p>
+              ) : s.deleteError ? (
                 <p className="mt-3 text-sm leading-6 text-amber-200/80">{s.deleteError}</p>
               ) : null}
             </div>

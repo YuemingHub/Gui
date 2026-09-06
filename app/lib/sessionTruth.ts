@@ -1,4 +1,4 @@
-﻿export type DeleteApiResult = {
+export type DeleteApiResult = {
   ok: boolean;
   status: number;
   data: { deleted?: boolean } | null;

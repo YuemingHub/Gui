@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  api as cookieApi,
-  claimWithAccount,
-  apiWithLegacyToken,
+  api as cookieApi,  apiWithLegacyToken,
   clearStoredToken,
   fetchMe,
   loadStoredToken,
@@ -97,7 +95,7 @@ export function useReturnSession() {
     async <T,>(method: string, path: string, body?: unknown) => {
       const legacy = legacyTokenRef.current;
       const r = legacy
-        ? await apiWithLegacyToken<T>(legacy, method, path)
+        ? await apiWithLegacyToken<T>(legacy, method, path, body)
         : await cookieApi<T>(method, path, body);
       // One rule for every endpoint: nobody stays inside a space the server
       // no longer recognises, whatever the caller was about to do next.
@@ -427,13 +425,13 @@ export function useReturnSession() {
     }
     // Map error codes
     const data = (r.data ?? {}) as { error?: string; message?: string };
-    const err = switch (data.error) {
-      'already_claimed' => '这个空间已经有账号了。直接登录即可。',
-      'login_taken' => '这个账号名已经有人用了。换一个，或者直接登录那个账号。',
-      'invalid_login_id' => '账号名不符合要求。用 3-32 个字母、数字、下划线或连字符。',
-      'weak_password' => '这个密码不够长。请至少用 10 个字符。',
-      default => data.message || '绑定失败，请再试一次。'
-    };
+    let err = data.message || '绑定失败，请再试一次。';
+    switch (data.error) {
+      case 'already_claimed': err = '这个空间已经有账号了。直接登录即可。'; break;
+      case 'login_taken': err = '这个账号名已经有人用了。换一个，或者直接登录那个账号。'; break;
+      case 'invalid_login_id': err = '账号名不符合要求。用 3-32 个字母、数字、下划线或连字符。'; break;
+      case 'weak_password': err = '这个密码不够长。请至少用 10 个字符。'; break;
+    }
     return { ok: false, error: err };
   }, [callLife, identity]);
   const deleteAll = useCallback(async (): Promise<boolean> => {
@@ -481,6 +479,7 @@ export function useReturnSession() {
     openOldSession,
     backToCurrent,
     finishDay,
+    claim,
     deleteAll,
   };
 }

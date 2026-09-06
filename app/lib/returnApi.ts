@@ -122,11 +122,12 @@ export async function apiWithLegacyToken<T = unknown>(
   token: string,
   method: string,
   path: string,
+  body?: unknown,
 ): Promise<ApiResult<T>> {
   return request<T>(path, method, {
     ...JSON_HEADERS,
     Authorization: "Bearer " + token,
-  });
+  }, body);
 }
 
 export interface LoginInput {
@@ -136,6 +137,12 @@ export interface LoginInput {
 
 export interface RegisterInput {
   invite_code: string;
+  login_id: string;
+  password: string;
+  display_name?: string;
+}
+
+export interface ClaimInput {
   login_id: string;
   password: string;
   display_name?: string;
@@ -189,5 +196,7 @@ export function probeLegacyToken(token: string): Promise<ApiResult<LegacyStateRe
 
 export function claimWithAccount(input: ClaimInput): Promise<ApiResult<AccountResponse>> {
   return api<AccountResponse>("POST", "/api/claim", input);
-}export const PROVIDER_DOWN_MESSAGE =
+}
+
+export const PROVIDER_DOWN_MESSAGE =
   "暂时没有连上。你刚才说的话都在，没有丢。";
