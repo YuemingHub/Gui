@@ -57,6 +57,21 @@ const UNKNOWN_FAILURE = "这里出了点问题。请再试一次。";
 const CREDENTIAL_FAILURE = "账号或密码不正确";
 const NO_LEGACY_SPACE = "这台浏览器上原来的空间已经不能用了。请用账号进入。";
 const SESSION_EXPIRED = "这里的登录刚刚失效了。请重新进入。你说过的话都还在。";
+const LOGOUT_FAILED = "没有退出成功。这台浏览器还停在你的空间里，请再试一次。";
+
+// Account rules, in one place. They mirror the Return backend exactly
+// (web/src/credentials.js: /^[a-z0-9_-]{3,32}$/, password length 10..200), and
+// the gate validates with them, so what a person reads is what the server uses.
+// A test keeps the two halves honest.
+export const LOGIN_ID_PATTERN = /^[a-z0-9_-]{3,32}$/;
+export const LOGIN_ID_HINT = "3-32 位小写字母、数字、下划线或连字符";
+export const MIN_PASSWORD_LENGTH = 10;
+export const MAX_PASSWORD_LENGTH = 200;
+export const PASSWORD_HINT = `至少 ${MIN_PASSWORD_LENGTH} 个字符`;
+
+export const isValidLoginId = (value: string): boolean => LOGIN_ID_PATTERN.test(value);
+export const isValidPassword = (value: string): boolean =>
+  value.length >= MIN_PASSWORD_LENGTH && value.length <= MAX_PASSWORD_LENGTH;
 
 /**
  * One short human line per backend failure. Login never explains which half of
@@ -76,15 +91,16 @@ export function describeAuthFailure(result: ApiResult<unknown>): string {
     case "invalid_credentials":
       return CREDENTIAL_FAILURE;
     case "invalid_code":
+      // No "ask me for one": whoever reads this is a person, not the operator.
       return data.reason === "used"
-        ? "这个邀请码已经被用过了。请向我要一个新的。"
+        ? "这个邀请码已经被用过了。请用下一个邀请码，或再要一个。"
         : "这个邀请码不对，或者已经不能用了。";
     case "login_taken":
       return "这个账号名已经有人用了。换一个，或者直接登录那个账号。";
     case "invalid_login_id":
-      return "账号名不符合要求。用 3-32 个字母、数字、下划线或连字符。";
+      return `账号名不符合要求。用 ${LOGIN_ID_HINT}。`;
     case "weak_password":
-      return "这个密码不够长。请至少用 10 个字符。";
+      return `这个密码不够长。请至少用 ${MIN_PASSWORD_LENGTH} 个字符。`;
     case "too_many_attempts":
       return "试的次数太多了。请等一会儿再来。";
     case "cross_origin":
@@ -112,7 +128,7 @@ export function createIdentity(
   login: (input: LoginInput) => Promise<IdentityResult>;
   register: (input: RegisterInput) => Promise<IdentityResult>;
   openLegacySpace: () => Promise<IdentityResult>;
-  logout: () => Promise<void>;
+  logout: () => Promise<IdentityResult>;
   invalidate: (cause?: InvalidationCause) => void;
 } {
   let state: IdentityState = {
@@ -249,15 +265,25 @@ export function createIdentity(
       return { ok: true, error: null };
     },
 
-    // Logging out is not ending the conversation and not deleting anything.
+    // Logging out is not ending the conversation and not deleting anything. It
+    // also does not claim the door closed when the server never answered: a
+    // failed logout on a shared browser must keep the person inside, telling
+    // them so, instead of pretending they are out.
     async logout() {
+      let result: IdentityResult = { ok: true, error: null };
       try {
-        await api.logout();
+        const r = await api.logout();
+        // 401 means the server already has no session here: that is closed.
+        if (!r.ok && r.status !== 401) {
+          result = { ok: false, error: r.networkError ? NETWORK_FAILURE : LOGOUT_FAILED };
+        }
       } catch {
-        /* the server session is gone either way; nothing local is kept */
+        result = { ok: false, error: LOGOUT_FAILED };
       }
+      if (!result.ok) return result;
       dropLegacyToken();
       commit(gateState(null));
+      return result;
     },
 
     // Any 401 from the Life API while inside chat means the session is gone.

@@ -1,7 +1,12 @@
 # Self Space · 正式部署准备（Gui + Return）
 
-> Status: production runbook · 2026-09-02
+> Status: production runbook · 2026-09-02（2026-09 W5 增补：环境变量、收录与旧域名处理）
 > 权威：Return `docs/self-space/`（Constitution / Kernel Contract / R1 Hypothesis）；接口权威：Return `docs/r0/GUI_RETURN_API_CONTRACT.md`
+
+## 0. 旧身份清理（W5）
+
+- 仓库根的 `CNAME`（`ymai.fun`）只属于 **GitHub Pages 的手动发布口**（`pages.yml`，带发布守卫，且只能发布不含 `/api` 的旧本地七模块表面），不影响 nginx 正式部署。正式 build 的文档元信息、robots、sitemap 不再写死任何域名：不设 `NEXT_PUBLIC_SITE_ORIGIN` 时页面 `noindex`、`robots.txt` 对所有爬虫 `disallow: /`。
+- 若正式部署最终不用 `ymai.fun`，在手动发布旧表面之前把 `CNAME` 改成实际域名即可；正式对话表面与这个文件无关。
 
 ## 1. 架构（单一来源原则）
 
@@ -99,6 +104,10 @@ rsync -a --delete out/ /var/www/self-space/gui/
 |---|---|---|
 | `NEXT_PUBLIC_RETURN_ORIGIN` | **留空** | 同源 `/api`（见硬规则 1） |
 | `NEXT_PUBLIC_BASE_PATH` | `/gui`（默认） | 站点挂在 `/gui/` 下；若要挂根目录，构建时显式置空 |
+| `NEXT_PUBLIC_SITE_ORIGIN` | **留空** | 对外声明的一个公开来源。留空时 `robots.txt` 对所有爬虫 `disallow: /`（账号门禁后面没有可收录的内容），页面也带 `noindex`。只有真正的公开表面才需要配它 |
+| `NEXT_PUBLIC_SHOW_LOCAL_TOOLS` | **留空** | 置 `1` 时抽屉里重新出现「本地工具（旧版草稿区）」入口。默认隐藏：新来的人不需要理解两套「自己的空间」 |
+
+另外：Gui 自测用 `npm run e2e` / `npm run screens`（见 `e2e/README.md`），需要 Chromium，跑在部署机之外。
 
 ## 4. nginx 配置（同源 `/api`，模板）
 
@@ -137,7 +146,8 @@ server {
 - [ ] Return：`npm test` 69/69 PASS（部署机上真实执行）；systemd active；`ss -tlnp | grep 3000` 仅 127.0.0.1
 - [ ] Provider：`USER_LLM_*` 已配置且 **CF001 真实模型重放已人工评审**（`npm run alpha:canonical`，结果 PASS/REVISE/FAIL 三选一记录——这是 Founder Alpha 门禁的一部分，部署不替代评审）
 - [ ] 邀请码：`node operator.js invite` 已生成并私下交付 Founder
-- [ ] Gui：`npm test` 43/43、`npm run lint`、`npm run build` 全绿；`out/` 已发布
+- [ ] Gui：`npm test` 58/58、`npm run lint`、`npm run build` 全绿；`out/` 已发布
+- [ ] Gui：`npm run e2e` 19/19、`npm run screens` 四种屏全绿（headed 抽查一次截图与 `e2e/evidence/` 一致）
 - [ ] 身份：第二个人在同一浏览器（不清存储、不删 cookie）打开只看到门禁；`/api/me` 未认证必须返回 401
 - [ ] 身份：`退出这个空间` 只调用 `/api/logout`——对话与记录原样留在服务端，重新登录立即可见
 - [ ] nginx：`nginx -t` 通过；`/gui/` 可打开；`/api/state` 未认证返回 401（不是 404/502）
@@ -145,6 +155,7 @@ server {
 - [ ] 故障演练：停掉 provider（错误 key）→ Gui 显示「暂时没有连上。你刚才说的话都在，没有丢。」且重试不重复发言
 - [ ] 备份：`R0_DATA_DIR` 定时 rsync/快照；恢复演练一次
 - [ ] 隐私核对：服务器访问日志不记录 `/api/message` 请求体（nginx 默认只记行，确认无 body 日志）；evidence 只存指纹（Return 侧已保证）
+- [ ] 身份与收录：页面 `<meta name="robots">` 为 noindex（或 `NEXT_PUBLIC_SITE_ORIGIN` 已按需配置）；`/gui/robots.txt` 内容与部署意图一致，不再指向任何旧域名
 
 ## 6. 运行期纪律（来自 Constitution / Kernel Contract）
 

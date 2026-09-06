@@ -18,7 +18,7 @@ import {
 } from "./returnApi.ts";
 import { createIdentity } from "./identity.ts";
 
-const BROWSER_ORIGIN = "https://ymai.me";
+const BROWSER_ORIGIN = "https://self-space.test";
 const CROSS_ORIGIN = "https://elsewhere.test";
 
 type Msg = { role: string; content: string; kind: string };

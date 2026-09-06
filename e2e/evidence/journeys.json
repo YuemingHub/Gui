@@ -1,0 +1,178 @@
+{
+  "builtAt": "2026-09-06T06:23:51.586Z",
+  "node": "v22.23.2",
+  "chromium": "C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
+  "headed": false,
+  "total": 19,
+  "passed": 19,
+  "failed": [],
+  "journeys": [
+    {
+      "name": "第一次打开：只有门禁，不播音乐，不替人决定",
+      "pass": true,
+      "ms": 775,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "注册：规则写在脸上，本地能发现的错不浪费一次请求",
+      "pass": true,
+      "ms": 807,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "登录：错一次说一句，对了就进来",
+      "pass": true,
+      "ms": 375,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "说一句 → 得到回应，只存一次",
+      "pass": true,
+      "ms": 1764,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "连不上模型：说的话还在，再试一次不重复",
+      "pass": true,
+      "ms": 586,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ]
+    },
+    {
+      "name": "新的对话 → 历史里找回来 → 回到当前",
+      "pass": true,
+      "ms": 2026,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "退出只是退出：话留在原处，再登录还在",
+      "pass": true,
+      "ms": 718,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "登录失效：说清楚，不让人以为话没了",
+      "pass": true,
+      "ms": 640,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "删除全部：没删成就说没删成，删成了才真的没了",
+      "pass": true,
+      "ms": 1112,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "断网：说一句「网络断了一下」，网通了再说不重复",
+      "pass": true,
+      "ms": 463,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+      ]
+    },
+    {
+      "name": "失败不沉默：载入对话",
+      "pass": true,
+      "ms": 328,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "失败不沉默：新的对话",
+      "pass": true,
+      "ms": 395,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "失败不沉默：历史列表",
+      "pass": true,
+      "ms": 387,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "失败不沉默：打开某段历史",
+      "pass": true,
+      "ms": 1065,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "失败不沉默：结束今天",
+      "pass": true,
+      "ms": 433,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "失败不沉默：退出",
+      "pass": true,
+      "ms": 417,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "name": "同一个浏览器换人：看不到上一个人在这里的话",
+      "pass": true,
+      "ms": 616,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "只用键盘：抽屉是对话框，Escape 回到原处，然后说一句话",
+      "pass": true,
+      "ms": 511,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "name": "安静、私人：没有自动播放，也没有把凭据留在浏览器",
+      "pass": true,
+      "ms": 873,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createIdentity, describeAuthFailure, spaceKey } from "./identity.ts";
+import { createIdentity, describeAuthFailure, spaceKey, LOGIN_ID_PATTERN, LOGIN_ID_HINT, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, isValidLoginId, isValidPassword } from "./identity.ts";
 import type { AuthApi, IdentityState } from "./identity.ts";
 
 type Res = {
@@ -191,7 +191,7 @@ test("邀请码的三种失败各不相同", () => {
   );
   assert.equal(
     describeAuthFailure(fail(403, { error: "invalid_code", reason: "used" })),
-    "这个邀请码已经被用过了。请向我要一个新的。",
+    "这个邀请码已经被用过了。请用下一个邀请码，或再要一个。",
   );
   assert.match(
     describeAuthFailure(fail(403, { error: "invalid_code", reason: "revoked" })),
@@ -202,7 +202,7 @@ test("邀请码的三种失败各不相同", () => {
 test("注册的其他后端错误各自映射成一句人话", () => {
   assert.equal(
     describeAuthFailure(fail(400, { error: "invalid_login_id" })),
-    "账号名不符合要求。用 3-32 个字母、数字、下划线或连字符。",
+    `账号名不符合要求。用 ${LOGIN_ID_HINT}。`,
   );
   assert.match(describeAuthFailure(fail(400, { error: "weak_password" })), /密码/);
   assert.match(describeAuthFailure(fail(429, { error: "too_many_attempts" })), /试的次数太多/);
@@ -324,4 +324,43 @@ test("自己删完数据时关掉空间，但不谎称登录失效", async () =>
 
   assert.equal(h.state().phase, "gate");
   assert.equal(h.state().gateError, null);
+});
+
+test("门禁上的账号规则就是后端的规则，不多不少", () => {
+  // Return web/src/credentials.js: const LOGIN_ID_RE = /^[a-z0-9_-]{3,32}$/;
+  // password length >= 10 && <= 200. If the backend moves, this fails first.
+  assert.equal(LOGIN_ID_PATTERN.source, "^[a-z0-9_-]{3,32}$");
+  assert.equal(MIN_PASSWORD_LENGTH, 10);
+  assert.equal(MAX_PASSWORD_LENGTH, 200);
+
+  assert.ok(isValidLoginId("a_b-c9"));
+  assert.ok(isValidLoginId("aming"), "老账号名仍然算");
+  assert.ok(!isValidLoginId("am"), "两个字符不能注册");
+  assert.ok(!isValidLoginId("Aming"), "大写不在规则里");
+  assert.ok(!isValidLoginId("a ming"), "空格不在规则里");
+  assert.ok(isValidPassword("long-enough-1"));
+  assert.ok(!isValidPassword("123456789"), "九个字符要拦在门禁，不是拦在服务器");
+});
+
+test("退出没成功时不谎称已退出：人还留在空间里", async () => {
+  const h = harness({ logout: fail(500, { error: "internal" }) });
+  await h.identity.login({ login_id: "aming", password: "long-enough-1" });
+
+  const r = await h.identity.logout();
+
+  assert.equal(r.ok, false);
+  assert.match(r.error ?? "", /没有退出成功/);
+  assert.equal(h.state().phase, "chat", "服务器没关门，界面不能先装成关了");
+
+  h.respond("logout", ok(200, { ok: true }));
+  assert.equal((await h.identity.logout()).ok, true);
+  assert.equal(h.state().phase, "gate");
+});
+
+test("服务器说没有这个会话时，退出就算完成了", async () => {
+  const h = harness({ logout: fail(401, { error: "unauthorized" }) });
+  await h.identity.login({ login_id: "aming", password: "long-enough-1" });
+
+  assert.equal((await h.identity.logout()).ok, true);
+  assert.equal(h.state().phase, "gate");
 });
