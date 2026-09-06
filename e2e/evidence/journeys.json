@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-09-06T06:23:51.586Z",
-  "node": "v22.23.2",
+  "builtAt": "2026-09-06T15:57:42.223Z",
+  "node": "v24.19.0",
   "chromium": "C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
   "headed": false,
   "total": 19,
@@ -10,7 +10,7 @@
     {
       "name": "第一次打开：只有门禁，不播音乐，不替人决定",
       "pass": true,
-      "ms": 775,
+      "ms": 769,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]
@@ -18,7 +18,7 @@
     {
       "name": "注册：规则写在脸上，本地能发现的错不浪费一次请求",
       "pass": true,
-      "ms": 807,
+      "ms": 801,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]
@@ -26,7 +26,7 @@
     {
       "name": "登录：错一次说一句，对了就进来",
       "pass": true,
-      "ms": 375,
+      "ms": 363,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
@@ -35,7 +35,7 @@
     {
       "name": "说一句 → 得到回应，只存一次",
       "pass": true,
-      "ms": 1764,
+      "ms": 1736,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]
@@ -43,7 +43,7 @@
     {
       "name": "连不上模型：说的话还在，再试一次不重复",
       "pass": true,
-      "ms": 586,
+      "ms": 575,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
@@ -52,7 +52,7 @@
     {
       "name": "新的对话 → 历史里找回来 → 回到当前",
       "pass": true,
-      "ms": 2026,
+      "ms": 2035,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]
@@ -60,7 +60,7 @@
     {
       "name": "退出只是退出：话留在原处，再登录还在",
       "pass": true,
-      "ms": 718,
+      "ms": 667,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
@@ -69,7 +69,7 @@
     {
       "name": "登录失效：说清楚，不让人以为话没了",
       "pass": true,
-      "ms": 640,
+      "ms": 629,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
@@ -79,7 +79,7 @@
     {
       "name": "删除全部：没删成就说没删成，删成了才真的没了",
       "pass": true,
-      "ms": 1112,
+      "ms": 1262,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
@@ -89,7 +89,7 @@
     {
       "name": "断网：说一句「网络断了一下」，网通了再说不重复",
       "pass": true,
-      "ms": 463,
+      "ms": 466,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
@@ -98,7 +98,7 @@
     {
       "name": "失败不沉默：载入对话",
       "pass": true,
-      "ms": 328,
+      "ms": 322,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -107,7 +107,7 @@
     {
       "name": "失败不沉默：新的对话",
       "pass": true,
-      "ms": 395,
+      "ms": 409,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -116,7 +116,7 @@
     {
       "name": "失败不沉默：历史列表",
       "pass": true,
-      "ms": 387,
+      "ms": 433,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -125,7 +125,7 @@
     {
       "name": "失败不沉默：打开某段历史",
       "pass": true,
-      "ms": 1065,
+      "ms": 1107,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -134,7 +134,7 @@
     {
       "name": "失败不沉默：结束今天",
       "pass": true,
-      "ms": 433,
+      "ms": 476,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -143,7 +143,7 @@
     {
       "name": "失败不沉默：退出",
       "pass": true,
-      "ms": 417,
+      "ms": 433,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
@@ -152,7 +152,7 @@
     {
       "name": "同一个浏览器换人：看不到上一个人在这里的话",
       "pass": true,
-      "ms": 616,
+      "ms": 691,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
@@ -161,7 +161,7 @@
     {
       "name": "只用键盘：抽屉是对话框，Escape 回到原处，然后说一句话",
       "pass": true,
-      "ms": 511,
+      "ms": 497,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]
@@ -169,7 +169,7 @@
     {
       "name": "安静、私人：没有自动播放，也没有把凭据留在浏览器",
       "pass": true,
-      "ms": 873,
+      "ms": 865,
       "consoleErrors": [
         "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
       ]

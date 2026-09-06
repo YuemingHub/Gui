@@ -361,7 +361,7 @@ onClick={() => {
                   setCarryInput("");
                   setEndLayerOpen(true);
                 }}
-                className="text-[12px] tracking-wide text-stone-600 transition hover:text-stone-400"
+                className="min-h-11 px-3 text-[12px] tracking-wide text-stone-600 transition hover:text-stone-400"
               >
                 今天先到这里
               </button>
