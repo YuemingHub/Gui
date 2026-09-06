@@ -1,4 +1,4 @@
-// Thin client for the Return-to-oneself backend API. Gui owns only display,
+﻿// Thin client for the Return-to-oneself backend API. Gui owns only display,
 // interaction and API calling — no product logic is duplicated here. The
 // message array returned by the backend is always treated as the single source
 // of conversation truth; the frontend never reconstructs session state from a
@@ -186,5 +186,8 @@ export function probeLegacyToken(token: string): Promise<ApiResult<LegacyStateRe
   return apiWithLegacyToken<LegacyStateResponse>(token, "GET", "/api/state");
 }
 
-export const PROVIDER_DOWN_MESSAGE =
+
+export function claimWithAccount(input: ClaimInput): Promise<ApiResult<AccountResponse>> {
+  return api<AccountResponse>("POST", "/api/claim", input);
+}export const PROVIDER_DOWN_MESSAGE =
   "暂时没有连上。你刚才说的话都在，没有丢。";

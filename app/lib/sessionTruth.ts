@@ -1,4 +1,4 @@
-export type DeleteApiResult = {
+﻿export type DeleteApiResult = {
   ok: boolean;
   status: number;
   data: { deleted?: boolean } | null;
@@ -11,7 +11,7 @@ export type StateApiResult = {
   data: { messages?: Array<{ role?: string; content?: string }> } | null;
 };
 
-export const DELETE_FAILED_MESSAGE = "没有删除成功。请再试一次。";
+export const DELETE_FAILED_MESSAGE = "删除没有全部完成。部分数据可能已经删除，你仍可以重试完成删除。";
 
 export function decideDeleteAll(result: DeleteApiResult): {
   resetAuth: boolean;
