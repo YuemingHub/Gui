@@ -23,6 +23,7 @@ import {
   type IdentityState,
 } from "@/app/lib/identity";
 import { decideDeleteAll, decideNetworkRetry } from "@/app/lib/sessionTruth";
+import { actionFailure, type ActionError } from "@/app/lib/actionTruth";
 
 interface StateMessageResult {
   error: string | null;
@@ -74,7 +75,9 @@ export function useReturnSession() {
   const [sending, setSending] = useState(false);
   const [lastFailed, setLastFailed] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // One action error surface for the whole space: no failed button may stay
+  // silent. Sending has its own bar above because an unfinished turn is real.
+  const [actionError, setActionError] = useState<ActionError | null>(null);
   const [restoreDraft, setRestoreDraft] = useState<string | null>(null);
   const [viewingOld, setViewingOld] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -117,7 +120,7 @@ export function useReturnSession() {
     setSending(false);
     setLastFailed(false);
     setProviderError(null);
-    setDeleteError(null);
+    setActionError(null);
     setRestoreDraft(null);
     setViewingOld(null);
     setSessionId(null);
@@ -131,8 +134,11 @@ export function useReturnSession() {
       return;
     }
     if (!r.ok || !r.data) {
+      // The alternative is an empty transcript that reads like an empty life.
+      setActionError(actionFailure("load", r));
       return;
     }
+    setActionError(null);
     setSessionId(r.data.session_id ?? null);
     setEnded(Boolean(r.data.ended));
     setViewingOld(null);
@@ -210,13 +216,20 @@ export function useReturnSession() {
     });
   }, [identity, runIdentity]);
 
-  // Logging out closes the session only: no end-session, no delete-all.
+  // Logging out closes the session only: no end-session, no delete-all. A failed
+  // logout leaves the person inside, saying so: on a shared browser the honest
+  // default is "you are still in", never a gate that only looks closed.
   const logout = useCallback(async () => {
     // Drop the bearer path first so the revoke always goes out on the cookie.
     legacyTokenRef.current = null;
     return runIdentity(async () => {
-      await identity.logout();
-      return { ok: true, error: null };
+      const r = await identity.logout();
+      if (r.error) {
+        setActionError(actionFailure("logout"));
+      } else {
+        setActionError(null);
+      }
+      return r;
     });
   }, [identity, runIdentity]);
 
@@ -344,7 +357,11 @@ export function useReturnSession() {
       identity.invalidate();
       return;
     }
-    if (!r.ok || !r.data) return;
+    if (!r.ok || !r.data) {
+      setActionError(actionFailure("new", r));
+      return;
+    }
+    setActionError(null);
     pendingTextRef.current = null;
     failureKindRef.current = null;
     setSessionId(r.data.session_id ?? null);
@@ -364,7 +381,11 @@ export function useReturnSession() {
       identity.invalidate();
       return;
     }
-    if (!r.ok || !r.data) return;
+    if (!r.ok || !r.data) {
+      setActionError(actionFailure("sessions", r));
+      return;
+    }
+    setActionError(null);
     setSessions(r.data.sessions || []);
   }, [callLife, identity]);
 
@@ -379,7 +400,11 @@ export function useReturnSession() {
         identity.invalidate();
         return;
       }
-      if (!r.ok || !r.data) return;
+      if (!r.ok || !r.data) {
+        setActionError(actionFailure("open", r));
+        return;
+      }
+      setActionError(null);
       setViewingOld(id);
       setLastFailed(false);
       setProviderError(null);
@@ -403,7 +428,11 @@ export function useReturnSession() {
         identity.invalidate();
         return false;
       }
-      if (!r.ok) return false;
+      if (!r.ok) {
+        setActionError(actionFailure("finish", r));
+        return false;
+      }
+      setActionError(null);
       setEnded(true);
       setViewingOld(null);
       return true;
@@ -413,16 +442,32 @@ export function useReturnSession() {
 
   const deleteAll = useCallback(async (): Promise<boolean> => {
     if (!chatOpenRef.current) return false;
-    setDeleteError(null);
+    setActionError(null);
     const r = await callLife<{ deleted: boolean }>("POST", "/api/delete-all");
     const decision = decideDeleteAll(r);
     if (decision.resetAuth) {
       identity.invalidate("deleted");
       return true;
     }
-    setDeleteError(decision.error);
+    // Same surface as everything else: "deleted" is never said unless the
+    // backend confirmed it, and the data is still where it was.
+    setActionError(actionFailure("delete", r));
     return false;
   }, [callLife, identity]);
+
+  const dismissActionError = useCallback(() => setActionError(null), []);
+
+  // "再试一次" re-runs the action that failed — nothing else, and never a send.
+  const retryActionError = useCallback(async (): Promise<void> => {
+    const area = actionError?.area;
+    if (!area) return;
+    setActionError(null);
+    if (area === "load") await loadState();
+    else if (area === "new") await startNewSession();
+    else if (area === "sessions") await loadSessions();
+    else if (area === "logout") await logout();
+    else if (area === "delete") await deleteAll();
+  }, [actionError?.area, deleteAll, loadSessions, loadState, logout, startNewSession]);
 
   return {
     view,
@@ -438,7 +483,7 @@ export function useReturnSession() {
     sending,
     lastFailed,
     providerError,
-    deleteError,
+    actionError,
     restoreDraft,
     viewingOld,
     sessionId,
@@ -457,5 +502,7 @@ export function useReturnSession() {
     backToCurrent,
     finishDay,
     deleteAll,
+    dismissActionError,
+    retryActionError,
   };
 }

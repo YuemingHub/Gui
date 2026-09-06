@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LocalSpace } from "@/app/LocalSpace";
 import { useReturnSession } from "@/app/hooks/useReturnSession";
+import { useVisualViewportHeight } from "@/app/hooks/useVisualViewportHeight";
+import { ActionNotice } from "./ActionNotice";
 import { Composer } from "./Composer";
 import { Drawer } from "./Drawer";
 import { IdentityGate } from "./IdentityGate";
 import { MessageList } from "./MessageList";
 
 type SessionApi = ReturnType<typeof useReturnSession>;
+
+// The old local-first draft surface stays in the codebase, out of the way. A
+// newcomer has enough to understand on first arrival, and "two kinds of your
+// space" is one too many. Set NEXT_PUBLIC_SHOW_LOCAL_TOOLS=1 in a build where
+// the owner wants the door back.
+const SHOW_LOCAL_TOOLS = process.env.NEXT_PUBLIC_SHOW_LOCAL_TOOLS === "1";
 
 export function ConversationView() {
   const s = useReturnSession();
@@ -29,12 +37,16 @@ export function ConversationView() {
       />
     );
   }
-  if (localSpaceOf === s.spaceKey) {
+  if (SHOW_LOCAL_TOOLS && localSpaceOf === s.spaceKey) {
     return <LocalSpace participantId={s.spaceKey} onBack={() => setLocalSpaceOf("")} />;
   }
   // Keyed on the participant: a new person must never inherit this transcript.
   return (
-    <ChatSurface key={s.spaceKey} session={s} onGoLocal={() => setLocalSpaceOf(s.spaceKey)} />
+    <ChatSurface
+      key={s.spaceKey}
+      session={s}
+      onGoLocal={SHOW_LOCAL_TOOLS ? () => setLocalSpaceOf(s.spaceKey) : undefined}
+    />
   );
 }
 
@@ -43,7 +55,7 @@ function ChatSurface({
   onGoLocal,
 }: {
   session: SessionApi;
-  onGoLocal: () => void;
+  onGoLocal?: () => void;
 }) {
   const s = session;
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -51,8 +63,35 @@ function ChatSurface({
   const [aboutOpen, setAboutOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [carryInput, setCarryInput] = useState("");
+  // A panel that opens below the fold is a silent failure of another kind.
+  const endLayerRef = useRef<HTMLDivElement | null>(null);
+  const deleteBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // The shell is as tall as what the screen actually shows, so a phone keyboard
+  // lifts the composer instead of burying it.
+  useVisualViewportHeight();
 
   const browsingOld = Boolean(s.viewingOld);
+
+  useEffect(() => {
+    if (!endLayerOpen && !deleteConfirm) return;
+    const el = deleteConfirm ? deleteBoxRef.current : endLayerRef.current;
+    // "nearest" keeps it on screen without jumping the transcript around.
+    el?.scrollIntoView({ block: "nearest" });
+  }, [endLayerOpen, deleteConfirm]);
+
+  // Escape always leads back to the conversation, from any of the three panels.
+  useEffect(() => {
+    if (!endLayerOpen && !aboutOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setEndLayerOpen(false);
+      setAboutOpen(false);
+      setDeleteConfirm(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [endLayerOpen, aboutOpen]);
 
   const openDrawer = () => {
     setDrawerOpen(true);
@@ -82,8 +121,22 @@ function ChatSurface({
     }
   };
 
+  const closeBottomPanel = () => {
+    setAboutOpen(false);
+    setEndLayerOpen(false);
+    setDeleteConfirm(false);
+  };
+
+  // "没能载入过去的对话列表" belongs in the drawer, next to the empty list it
+  // failed to fill. Everything else shows here.
+  const drawerError = s.actionError?.area === "sessions" ? s.actionError : null;
+  const surfaceError = drawerError ? null : s.actionError;
+
   return (
-    <div className="relative z-10 flex h-[100dvh] flex-col">
+    <div
+      className="relative z-10 flex flex-col"
+      style={{ height: "var(--vvh, 100dvh)" }}
+    >
       <header className="flex items-center justify-between border-b border-white/8 bg-[#0b0e12]/85 px-3 pb-2 pt-[calc(0.6rem+var(--sat))] backdrop-blur">
         <button
           type="button"
@@ -96,7 +149,7 @@ function ChatSurface({
         <p className="text-sm tracking-[0.2em] text-stone-400">我和自己</p>
         <button
           type="button"
-          onClick={handleNewSession}
+          onClick={() => void handleNewSession()}
           aria-label="新的对话"
           className="rounded-full px-3 py-2 text-lg leading-none text-stone-500 transition hover:text-stone-200"
         >
@@ -127,29 +180,42 @@ function ChatSurface({
         </div>
       ) : null}
 
-      <div className="border-t border-white/8 bg-[#0b0e12]/85 px-4 pb-[calc(0.9rem+var(--sab))] pt-3 backdrop-blur sm:px-6">
+      <ActionNotice
+        error={surfaceError}
+        onRetry={() => void s.retryActionError()}
+        onDismiss={s.dismissActionError}
+      />
+
+      {/* The bottom bar holds the panels too (关于这里, 结束今天). On a phone the
+          transcript is short and the panel is long, so the panel gets its own
+          scroll instead of pushing its own buttons below the screen. */}
+      <div className="max-h-[70%] overflow-y-auto overscroll-contain border-t border-white/8 bg-[#0b0e12]/85 px-4 pb-[calc(0.9rem+var(--sab))] pt-3 backdrop-blur sm:px-6">
         {aboutOpen ? (
           <div className="mx-auto w-full max-w-2xl">
             <div className="flex items-center justify-between">
               <p className="text-sm text-stone-300">关于这里</p>
               <button
                 type="button"
-                onClick={() => {
-                  setAboutOpen(false);
-                  setDeleteConfirm(false);
-                }}
+                onClick={closeBottomPanel}
                 className="rounded-full px-3 py-1.5 text-xs text-stone-500 transition hover:text-stone-300"
               >
-                返回
+                返回对话
               </button>
             </div>
             <p className="mt-3 text-[13px] leading-6 text-stone-500">
-              对话保存在这个产品自己的服务器上，只属于你这个参与者。这里没有排行、没有打卡、没有推送。解释权在你：你说错了就是错了，你的现实推翻这里的任何理解。
+              对话保存在这个产品自己的服务器上，只属于你这个参与者。换设备、换浏览器，用账号进来还是这一段。
+              这里没有排行、没有打卡、没有推送。解释权在你：你说错了就是错了，你的现实推翻这里的任何理解。
+            </p>
+            <p className="mt-3 text-[13px] leading-6 text-stone-600">
+              只有这里的对话会被带走。这台浏览器自己的本地记录不属于账号，换设备不会跟过去。
             </p>
             <p className="mt-5 text-sm text-stone-300">数据与隐私</p>
             <div className="mt-2">
               {deleteConfirm ? (
-                <div className="rounded-2xl border border-red-400/25 bg-[rgba(180,60,50,0.08)] p-4">
+                <div
+                  ref={deleteBoxRef}
+                  className="rounded-2xl border border-red-400/25 bg-[rgba(180,60,50,0.08)] p-4"
+                >
                   <p className="text-sm leading-6 text-stone-200">
                     真的删除全部数据？对话、记忆、记录会一起消失，无法找回。
                   </p>
@@ -169,9 +235,6 @@ function ChatSurface({
                       先不删
                     </button>
                   </div>
-                  {s.deleteError ? (
-                    <p className="mt-3 text-sm leading-6 text-amber-200/80">{s.deleteError}</p>
-                  ) : null}
                 </div>
               ) : (
                 <button
@@ -185,7 +248,7 @@ function ChatSurface({
             </div>
           </div>
         ) : endLayerOpen ? (
-          <div className="mx-auto w-full max-w-2xl">
+          <div ref={endLayerRef} className="mx-auto w-full max-w-2xl">
             <p className="text-sm text-stone-300">今天先到这里。</p>
             <p className="mt-1 text-[13px] leading-6 text-stone-500">
               可以带走一句话，也可以什么都不带。
@@ -195,10 +258,11 @@ function ChatSurface({
               onChange={(e) => setCarryInput(e.target.value)}
               rows={2}
               maxLength={500}
+              aria-label="想带走的话"
               placeholder="想带走的话（可留空）"
               className="mt-3 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[15px] leading-6 text-stone-100 placeholder:text-stone-600 focus:border-white/20"
             />
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void handleFinishDay(carryInput.trim())}
@@ -273,6 +337,8 @@ function ChatSurface({
         loading={s.sessionsLoading}
         currentSessionId={s.sessionId}
         viewingOld={s.viewingOld}
+        actionError={drawerError}
+        onRetryActionError={() => void s.retryActionError()}
         onClose={() => setDrawerOpen(false)}
         onSelectSession={handleSelectSession}
         onNewSession={handleNewSession}

@@ -2,6 +2,7 @@
 
 import { useAppStorage } from "@/app/hooks/useAppStorage";
 import type { AppState, SectionId } from "@/app/lib/types";
+import { AmbientBgm } from "@/components/layout/AmbientBgm";
 import { AppShell } from "@/components/layout/AppShell";
 import { ClearingRoom } from "@/components/sections/ClearingRoom";
 import { GardenSection } from "@/components/sections/GardenSection";
@@ -134,6 +135,9 @@ function LocalSpaceContent({
       >
         回到对话
       </button>
+      {/* The legacy surface keeps its own ambient sound, opt-in and visible. The
+          conversation surface never loads it. */}
+      <AmbientBgm />
     </>
   );
 }
