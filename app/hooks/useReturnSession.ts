@@ -149,7 +149,13 @@ export function useReturnSession() {
     setViewingOld(null);
     setLastFailed(false);
     setProviderError(null);
-    setMessages(r.data.messages || []);
+    const msgs = r.data.messages || [];
+    // A turn can still be in flight on the server while this page loads — the
+    // person refreshed or came back mid-wait. The transcript ends on their own
+    // words with no reply yet. Show the same「正在回应」they would have seen,
+    // otherwise the space reads as dead and the words read as lost.
+    const pendingTurn = msgs.length > 0 && msgs[msgs.length - 1].role === "user";
+    setMessages(pendingTurn ? [...msgs, { ...LOADING_MESSAGE, __loading: true }] : msgs);
   }, [callLife, identity]);
 
   const renderMessages = useCallback((msgs: Message[]) => {
@@ -180,6 +186,58 @@ export function useReturnSession() {
     spaceKeyRef.current = openSpaceKey;
     void loadState();
   }, [chatOpen, openSpaceKey, loadState, resetChatView]);
+
+  // Follow a turn that is still in flight on the server (the person refreshed
+  // or came back mid-wait; loadState showed their words with「正在回应」).
+  // The reply lands on the server regardless of this tab, so the transcript
+  // follows the server truth until the reply appears. If the turn never
+  // settles within the provider's own timeout budget, surface the same honest
+  // provider bar and「再试一次」as a failed send — a retry re-requests the
+  // reply without duplicating the stored words.
+  useEffect(() => {
+    if (!chatOpen || viewingOld || ended) return;
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    // Follow when the truth ends on the person's own words, or when loadState
+    // restored the「正在回应」bubble for such a turn (its role is assistant).
+    // An active send owns the surface itself — excluded by sendingRef.
+    if (!last.__loading && last.role !== "user") return;
+    if (sendingRef.current) return;
+    let stopped = false;
+    let polls = 0;
+    const timer = setInterval(async () => {
+      if (stopped || sendingRef.current) return;
+      polls += 1;
+      if (polls > 40) {
+        // 40 × 3s ≥ the provider's own 90s budget: this turn is not coming
+        // back on its own. Same surface as any failed send.
+        stopped = true;
+        setMessages((prev) => prev.filter((m) => !m.__loading));
+        setLastFailed(true);
+        setProviderError(PROVIDER_DOWN_MESSAGE);
+        return;
+      }
+      const r = await callLife<StatePayload>("GET", "/api/state");
+      if (stopped) return;
+      if (r.status === 401) {
+        identity.invalidate();
+        return;
+      }
+      if (!r.ok || !r.data) return; // transient: keep following
+      setEnded(Boolean(r.data.ended));
+      const msgs = r.data.messages || [];
+      const lastMsg = msgs[msgs.length - 1];
+      if (r.data.ended || !lastMsg || lastMsg.role !== "user") {
+        // The reply landed (or the day ended): show the stored truth.
+        setMessages(msgs);
+        stopped = true;
+      }
+    }, 3000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [messages, chatOpen, viewingOld, ended, callLife, identity]);
 
   const runIdentity = useCallback(
     async (fn: () => Promise<{ ok: boolean; error: string | null }>) => {
