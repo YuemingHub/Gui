@@ -276,6 +276,33 @@ async function main() {
     await shoot(page, "04b-得到回应");
   });
 
+  // ---- 4b. late reply must clear the failure bar it triggered
+  await journey("回应迟到：失败横幅出现后，回应落地横幅自己退场", async (page) => {
+    reset();
+    // Hold the reply past the follow window (40 × 3s): the honest failure bar
+    // shows while the server is still working, and when the reply lands the
+    // stored truth must replace the bar — the space may not keep lying.
+    harness.slowReply(129_000);
+    await loginAs(page, "aming");
+    const line = "这句话要等很久，久过那个横幅。";
+    await send(page, line);
+    await page.getByText("正在回应").first().waitFor({ timeout: 5000 });
+    // reload mid-flight: the pending turn restores and keeps following
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByText("正在回应").first().waitFor({ timeout: 10_000 });
+    // past the follow window the bar shows while the turn is still live
+    await page.getByRole("button", { name: "再试一次" }).waitFor({ timeout: 150_000 });
+    ok(countRole(lastSession("aming"), "user") === 1, "横幅出现时话丢了");
+    await shoot(page, "04b-迟到回应横幅出现");
+    // the server lands the reply at ~129s: the bar must clear on its own
+    await waitReply(page, 30_000);
+    const barLeft = await page.getByRole("button", { name: "再试一次" }).isVisible().catch(() => false);
+    ok(!barLeft, "回应落地后失败横幅还在");
+    ok(countRole(lastSession("aming"), "assistant") === 1, "迟到的回应没入库");
+    ok((await plain(page)).includes(line), "迟到的回应出现后原话不见了");
+    await shoot(page, "04c-迟到回应横幅退场");
+  });
+
   // ---- 5. provider failure → retry
   await journey("连不上模型：说的话还在，再试一次不重复", async (page, context, seen) => {
     reset();
