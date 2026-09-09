@@ -190,10 +190,11 @@ export function useReturnSession() {
   // Follow a turn that is still in flight on the server (the person refreshed
   // or came back mid-wait; loadState showed their words with「正在回应」).
   // The reply lands on the server regardless of this tab, so the transcript
-  // follows the server truth until the reply appears. If the turn never
-  // settles within the provider's own timeout budget, surface the same honest
-  // provider bar and「再试一次」as a failed send — a retry re-requests the
-  // reply without duplicating the stored words.
+  // follows the server truth until the reply appears. Past typical reply
+  // latency the failure bar shows (honest: the wait is already abnormal), but
+  // polling keeps running — the server's own provider budget is longer, and a
+  // reply that lands late must replace the bar, never leave it lying around.
+  // Only when the server's 180s failure ceiling is outlived does polling stop.
   useEffect(() => {
     if (!chatOpen || viewingOld || ended) return;
     const last = messages[messages.length - 1];
@@ -205,17 +206,28 @@ export function useReturnSession() {
     if (sendingRef.current) return;
     let stopped = false;
     let polls = 0;
+    let deadShown = false;
     const timer = setInterval(async () => {
       if (stopped || sendingRef.current) return;
       polls += 1;
-      if (polls > 40) {
-        // 40 × 3s ≥ the provider's own 90s budget: this turn is not coming
-        // back on its own. Same surface as any failed send.
+      if (polls > 64) {
+        // 64 × 3s outlives the server's own 180s provider budget: this turn is
+        // not coming back on its own. Same surface as any failed send.
         stopped = true;
         setMessages((prev) => prev.filter((m) => !m.__loading));
         setLastFailed(true);
         setProviderError(PROVIDER_DOWN_MESSAGE);
         return;
+      }
+      if (polls > 40 && !deadShown) {
+        // 40 × 3s: past every normal reply. Surface the failure bar now, keep
+        // following. The「正在回应」bubble stays — the turn may still land, and
+        // touching messages here would restart this effect and lose the poll
+        // count. The bar must clear itself the moment the server truth
+        // settles, because by then the words have been answered.
+        deadShown = true;
+        setLastFailed(true);
+        setProviderError(PROVIDER_DOWN_MESSAGE);
       }
       const r = await callLife<StatePayload>("GET", "/api/state");
       if (stopped) return;
@@ -228,8 +240,11 @@ export function useReturnSession() {
       const msgs = r.data.messages || [];
       const lastMsg = msgs[msgs.length - 1];
       if (r.data.ended || !lastMsg || lastMsg.role !== "user") {
-        // The reply landed (or the day ended): show the stored truth.
+        // The reply landed (or the day ended): show the stored truth and take
+        // the failure bar back down — an answered turn may never keep the bar.
         setMessages(msgs);
+        setLastFailed(false);
+        setProviderError(null);
         stopped = true;
       }
     }, 3000);
