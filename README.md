@@ -1,3 +1,15 @@
+> ⚠️ **SUPERSEDED / ARCHIVE-READY · 2026-09-25**
+>
+> This repository is no longer the canonical Self Space frontend repository.
+>
+> Since 2026-09-12, Gui has been physically merged into `YuemingHub/Self-Space/gui`. `YuemingHub/Self-Space` is the only active Self Space product/code/deployment source.
+>
+> Do not make new product changes here, sync this repo back into Self-Space, or treat its README/state as current product truth.
+>
+> This repository is preserved for Git history/provenance and is ready for GitHub archive when repository-admin action is available.
+
+---
+
 # 回到自己 · Gui
 
 > **当前形态（2026-09）**：这是一个靠账号进入的私人对话空间（“我和自己”）。打开应用先看到登录门禁，对话、记忆、记录保存在 Return 后端自己的服务器上；换设备登录，还能回到同一段对话。
